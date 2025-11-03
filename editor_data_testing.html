@@ -509,6 +509,146 @@ background: rgba(251, 191, 36, 0.2);
 border-color: var(--warning);
 color: var(--warning);
 }
+
+/* Change Log Panel */
+.change-log-panel {
+background: linear-gradient(135deg, #065f46 0%, #1e293b 100%);
+border: 2px solid var(--success);
+border-radius: 12px;
+padding: 20px;
+margin-top: 24px;
+margin-bottom: 24px;
+}
+
+.change-log-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+cursor: pointer;
+user-select: none;
+margin-bottom: 16px;
+}
+
+.change-log-header:hover {
+opacity: 0.9;
+}
+
+.change-log-title {
+display: flex;
+align-items: center;
+gap: 10px;
+font-size: 18px;
+font-weight: 700;
+color: var(--success);
+}
+
+.change-log-toggle {
+font-size: 24px;
+transition: transform 0.3s ease;
+}
+
+.change-log-toggle.collapsed {
+transform: rotate(-90deg);
+}
+
+.change-log-content {
+max-height: 500px;
+overflow-y: auto;
+transition: all 0.3s ease;
+}
+
+.change-log-content.collapsed {
+max-height: 0;
+overflow: hidden;
+opacity: 0;
+}
+
+.change-log-empty {
+text-align: center;
+padding: 30px;
+color: var(--muted);
+font-size: 14px;
+}
+
+.change-log-item {
+background: rgba(0, 0, 0, 0.3);
+border: 1px solid var(--border);
+border-radius: 8px;
+padding: 16px;
+margin-bottom: 12px;
+position: relative;
+}
+
+.change-log-item:hover {
+background: rgba(0, 0, 0, 0.4);
+border-color: var(--success);
+}
+
+.change-log-timestamp {
+font-size: 11px;
+color: var(--muted);
+margin-bottom: 8px;
+display: flex;
+align-items: center;
+gap: 6px;
+}
+
+.change-log-modification {
+font-size: 14px;
+font-weight: 600;
+color: var(--text);
+margin-bottom: 10px;
+padding: 8px 12px;
+background: rgba(124, 178, 255, 0.1);
+border-radius: 6px;
+border-left: 3px solid var(--accent);
+}
+
+.change-log-details {
+display: grid;
+gap: 8px;
+font-size: 13px;
+}
+
+.change-log-detail {
+display: flex;
+gap: 8px;
+padding: 6px 10px;
+background: rgba(124, 178, 255, 0.05);
+border-radius: 4px;
+}
+
+.change-log-detail-label {
+font-weight: 600;
+color: var(--success);
+min-width: 120px;
+}
+
+.change-log-detail-value {
+color: var(--text);
+flex: 1;
+}
+
+.change-log-filters {
+margin-top: 8px;
+padding: 10px;
+background: rgba(0, 0, 0, 0.2);
+border-radius: 6px;
+font-size: 12px;
+}
+
+.change-log-filter-item {
+padding: 4px 0;
+color: var(--muted);
+}
+
+.change-log-actions {
+display: flex;
+gap: 10px;
+margin-top: 16px;
+padding-top: 16px;
+border-top: 1px solid var(--border);
+}
 </style>
 </head>
 <body>
@@ -767,7 +907,26 @@ color: var(--warning);
         </div>
       </div>
     </div>
-
+  <!-- HISTORIAL DE CAMBIOS -->
+  <div class="change-log-panel">
+    <div class="change-log-header" id="changeLogHeader">
+      <div class="change-log-title">
+        📋 Historial de Modificaciones
+        <span class="pill success" id="changeLogCount">0 cambios</span>
+      </div>
+      <div>
+        <button id="exportLogBtn" class="btn btn-ghost" style="padding:6px 12px;font-size:12px;margin-right:10px;">
+          📥 Exportar Log
+        </button>
+        <span class="change-log-toggle" id="changeLogToggle">🔽</span>
+      </div>
+    </div>
+    <div class="change-log-content" id="changeLogContent">
+      <div class="change-log-empty">
+        No se han realizado modificaciones aún. Los cambios aplicados se registrarán aquí.
+      </div>
+    </div>
+  </div>
     <!-- TABLA UNIFICADA -->
     <div class="table-container" style="margin-top:20px;">
       <table class="data-table" id="unifiedTable">
@@ -858,7 +1017,8 @@ const State = {
   modifiedRowIndices: new Set(),
   currentStep: 1,
   fileColumnsInfo: [],
-  hasColumnMismatch: false // flag para detectar inconsistencias
+  hasColumnMismatch: false, // flag para detectar inconsistencias
+  changeLog: [] // Historial de MODIFICACIONES
 };
 
 const Utils = {
@@ -1333,6 +1493,7 @@ const UnifiedManager = {
   init() {
     this.initFilters();
     this.initEditor();
+    this.initChangeLog();
     this.render();
   },
 
@@ -1495,28 +1656,259 @@ const UnifiedManager = {
   },
 
 // EDITOR
-initEditor() {
-  const modifyType = document.getElementById('modifyType');
-  const previewBtn = document.getElementById('previewChangesBtn');
-  const applyBtn = document.getElementById('applyChangesBtn');
-  const undoBtn = document.getElementById('undoChangesBtn');
+  initEditor() {
+    const modifyType = document.getElementById('modifyType');
+    const previewBtn = document.getElementById('previewChangesBtn');
+    const applyBtn = document.getElementById('applyChangesBtn');
+    const undoBtn = document.getElementById('undoChangesBtn');
 
-  // Poblar selector de campos
-  const fieldSelect = document.getElementById('fieldToEdit');
-  const columns = State.columns.filter(col => !col.startsWith('_'));
-  fieldSelect.innerHTML = columns.map(col => `<option value="${col}">${col}</option>`).join('');
+    // Poblar selector de campos
+    const fieldSelect = document.getElementById('fieldToEdit');
+    const columns = State.columns.filter(col => !col.startsWith('_'));
+    fieldSelect.innerHTML = columns.map(col => `<option value="${col}">${col}</option>`).join('');
 
-  modifyType.addEventListener('change', () => {
-    const isFindReplace = modifyType.value === 'findReplace';
-    document.getElementById('findReplaceGroup').classList.toggle('hidden', !isFindReplace);
-    document.getElementById('newValueGroup').classList.toggle('hidden', isFindReplace || modifyType.value === 'clear');
+    modifyType.addEventListener('change', () => {
+      const isFindReplace = modifyType.value === 'findReplace';
+      document.getElementById('findReplaceGroup').classList.toggle('hidden', !isFindReplace);
+      document.getElementById('newValueGroup').classList.toggle('hidden', isFindReplace || modifyType.value === 'clear');
+    });
+
+    previewBtn.addEventListener('click', () => this.togglePreview());
+    applyBtn.addEventListener('click', () => this.applyChanges());
+    undoBtn.addEventListener('click', () => this.undoChanges());
+  },
+
+  initChangeLog() {
+    const header = document.getElementById('changeLogHeader');
+    const toggle = document.getElementById('changeLogToggle');
+    const content = document.getElementById('changeLogContent');
+    const exportBtn = document.getElementById('exportLogBtn');
+
+    // Toggle panel
+    header.addEventListener('click', (e) => {
+      // No colapsar si se hace click en el botón de exportar
+      if (e.target.closest('#exportLogBtn')) return;
+      
+      content.classList.toggle('collapsed');
+      toggle.classList.toggle('collapsed');
+    });
+
+    // Exportar log
+    exportBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.exportChangeLog();
+    });
+
+    this.renderChangeLog();
+  },
+
+  addToChangeLog(modification) {
+    const timestamp = new Date();
+    const logEntry = {
+      timestamp: timestamp,
+      modification: modification,
+      filters: JSON.parse(JSON.stringify(State.filters)),
+      filterLogic: State.filterLogic,
+      affectedRows: modification.affectedRows
+    };
+
+    State.changeLog.push(logEntry);
+    this.renderChangeLog();
+  },
+
+  renderChangeLog() {
+    const content = document.getElementById('changeLogContent');
+    const countPill = document.getElementById('changeLogCount');
+
+    countPill.textContent = `${State.changeLog.length} cambio${State.changeLog.length !== 1 ? 's' : ''}`;
+
+    if (State.changeLog.length === 0) {
+      content.innerHTML = `
+        <div class="change-log-empty">
+          No se han realizado modificaciones aún. Los cambios aplicados se registrarán aquí.
+        </div>
+      `;
+      return;
+  }
+
+    // Renderizar en orden inverso (más reciente primero)
+    const logsHTML = [...State.changeLog].reverse().map((entry, index) => {
+      const actualIndex = State.changeLog.length - 1 - index;
+      const time = entry.timestamp.toLocaleString('es-ES', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+
+      const mod = entry.modification;
+      let modificationText = '';
+
+      switch (mod.type) {
+        case 'replace':
+          modificationText = `Campo "<strong>${mod.field}</strong>" → Reemplazar con "<strong>${mod.newValue}</strong>"`;
+          break;
+        case 'append':
+          modificationText = `Campo "<strong>${mod.field}</strong>" → Añadir al final: "<strong>${mod.newValue}</strong>"`;
+          break;
+        case 'prepend':
+          modificationText = `Campo "<strong>${mod.field}</strong>" → Añadir al inicio: "<strong>${mod.newValue}</strong>"`;
+          break;
+        case 'clear':
+          modificationText = `Campo "<strong>${mod.field}</strong>" → Limpiar campo`;
+          break;
+        case 'findReplace':
+          modificationText = `Campo "<strong>${mod.field}</strong>" → Buscar "<strong>${mod.findText}</strong>" y reemplazar por "<strong>${mod.replaceText}</strong>"`;
+          break;
+      }
+
+      const filtersHTML = entry.filters.length > 0 ? `
+        <div class="change-log-filters">
+          <strong>Filtros aplicados (${entry.filterLogic.toUpperCase()}):</strong>
+          ${entry.filters.map(f => `
+            <div class="change-log-filter-item">
+              • ${f.column} ${this.getOperatorText(f.operator)} ${f.value ? '"' + f.value + '"' : ''}
+            </div>
+          `).join('')}
+        </div>
+      ` : '<div class="change-log-detail"><span class="change-log-detail-label">Filtros:</span><span class="change-log-detail-value">Sin filtros (todas las filas)</span></div>';
+
+      return `
+        <div class="change-log-item">
+          <div class="change-log-timestamp">
+            🕒 ${time} <span style="color:var(--border);">|</span> Cambio #${actualIndex + 1}
+          </div>
+          <div class="change-log-modification">
+            ${modificationText}
+          </div>
+          <div class="change-log-details">
+            <div class="change-log-detail">
+              <span class="change-log-detail-label">Filas afectadas:</span>
+              <span class="change-log-detail-value"><strong style="color:var(--success);">${entry.affectedRows}</strong> filas modificadas</span>
+            </div>
+            ${filtersHTML}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    content.innerHTML = logsHTML;
+  },
+
+  getOperatorText(operator) {
+  const operators = {
+    'contains': 'contiene',
+    'notContains': 'no contiene',
+    'equals': 'igual a',
+    'notEquals': 'diferente de',
+    'startsWith': 'empieza con',
+    'endsWith': 'termina con',
+    'empty': 'está vacío',
+    'notEmpty': 'no está vacío'
+  };
+  return operators[operator] || operator;
+  },
+
+  exportChangeLog() {
+  if (State.changeLog.length === 0) {
+    alert('No hay cambios registrados para exportar.');
+    return;
+  }
+
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+  const filename = `change_log_${timestamp}.txt`;
+
+  let logText = '═══════════════════════════════════════════════════════════════\n';
+  logText += '               DATA EDITOR PRO - HISTORIAL DE CAMBIOS\n';
+  logText += '═══════════════════════════════════════════════════════════════\n\n';
+  logText += `Fecha de exportación: ${new Date().toLocaleString('es-ES')}\n`;
+  logText += `Total de modificaciones: ${State.changeLog.length}\n`;
+  logText += `Total de filas en dataset: ${State.data.length}\n`;
+  logText += `Total de filas modificadas: ${State.modifiedRowIndices.size}\n\n`;
+
+  State.changeLog.forEach((entry, index) => {
+    const time = entry.timestamp.toLocaleString('es-ES', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+
+    const mod = entry.modification;
+    
+    logText += '───────────────────────────────────────────────────────────────\n';
+    logText += `CAMBIO #${index + 1}\n`;
+    logText += '───────────────────────────────────────────────────────────────\n';
+    logText += `Fecha/Hora: ${time}\n\n`;
+    
+    logText += `MODIFICACIÓN:\n`;
+    logText += `  Campo: ${mod.field}\n`;
+    logText += `  Tipo: ${this.getModificationTypeText(mod.type)}\n`;
+    
+    switch (mod.type) {
+      case 'replace':
+        logText += `  Nuevo valor: "${mod.newValue}"\n`;
+        break;
+      case 'append':
+        logText += `  Texto añadido al final: "${mod.newValue}"\n`;
+        break;
+      case 'prepend':
+        logText += `  Texto añadido al inicio: "${mod.newValue}"\n`;
+        break;
+      case 'clear':
+        logText += `  Acción: Campo limpiado (vacío)\n`;
+        break;
+      case 'findReplace':
+        logText += `  Buscar: "${mod.findText}"\n`;
+        logText += `  Reemplazar por: "${mod.replaceText}"\n`;
+        break;
+    }
+    
+    logText += `\nFILAS AFECTADAS: ${entry.affectedRows}\n\n`;
+    
+    if (entry.filters.length > 0) {
+      logText += `FILTROS APLICADOS (Lógica: ${entry.filterLogic.toUpperCase()}):\n`;
+      entry.filters.forEach((filter, i) => {
+        logText += `  ${i + 1}. ${filter.column} ${this.getOperatorText(filter.operator)}`;
+        if (filter.value) {
+          logText += ` "${filter.value}"`;
+        }
+        logText += '\n';
+      });
+    } else {
+      logText += `FILTROS: Ninguno (se aplicó a todas las filas)\n`;
+    }
+    
+    logText += '\n';
   });
 
-  previewBtn.addEventListener('click', () => this.togglePreview());
-  applyBtn.addEventListener('click', () => this.applyChanges());
-  undoBtn.addEventListener('click', () => this.undoChanges());
-},
+  logText += '═══════════════════════════════════════════════════════════════\n';
+  logText += '                          FIN DEL LOG\n';
+  logText += '═══════════════════════════════════════════════════════════════\n';
 
+  const blob = new Blob([logText], { type: 'text/plain;charset=utf-8' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+
+  Utils.setStatus('success', `Log exportado: ${filename}`, '📥');
+  },
+
+  getModificationTypeText(type) {
+  const types = {
+    'replace': 'Reemplazar Valor',
+    'append': 'Añadir al Final',
+    'prepend': 'Añadir al Inicio',
+    'clear': 'Limpiar Campo',
+    'findReplace': 'Buscar y Reemplazar'
+  };
+  return types[type] || type;
+},
 togglePreview() {
   if (this.previewMode) {
     // Si ya está en modo preview, cancelar y volver
@@ -1610,15 +2002,33 @@ cancelPreview() {
 
 applyChanges() {
   const field = document.getElementById('fieldToEdit').value;
-  
+  const modifyType = document.getElementById('modifyType').value;
+  const newValue = document.getElementById('newValue').value;
+  const findText = document.getElementById('findText').value;
+  const replaceText = document.getElementById('replaceText').value;
+
+  let affectedCount = 0;
+
   State.data.forEach(row => {
     if (row[`_preview_${field}`] !== undefined) {
       row[field] = row[`_preview_${field}`];
       row._modified = true;
       State.modifiedRowIndices.add(row._rowId);
       delete row[`_preview_${field}`];
+      affectedCount++;
     }
   });
+
+  // ← NUEVO: Registrar cambio en el log
+  const modification = {
+    field: field,
+    type: modifyType,
+    newValue: newValue,
+    findText: findText,
+    replaceText: replaceText,
+    affectedRows: affectedCount
+  };
+  this.addToChangeLog(modification);
 
   this.previewMode = false;
   const filteredData = Utils.applyFilters(State.data, State.filters);
@@ -1635,17 +2045,19 @@ applyChanges() {
   document.getElementById('undoChangesBtn').disabled = false;
   document.getElementById('changesPill').textContent = '0 filas serán modificadas';
 
-  Utils.setStatus('success', '✅ Cambios aplicados correctamente', '✅');
+  Utils.setStatus('success', `✅ ${affectedCount} filas modificadas y registradas en el historial`, '✅');
 },
 
 undoChanges() {
   State.data = JSON.parse(JSON.stringify(State.originalData));
   State.modifiedRowIndices.clear();
+  State.changeLog = []; // ← NUEVO: Limpiar el log también
   
   this.previewMode = false;
   const filteredData = Utils.applyFilters(State.data, State.filters);
   this.renderTable(filteredData);
   this.updateEditorStats();
+  this.renderChangeLog();
 
   // Restaurar botón a modo "Previsualizar"
   const previewBtn = document.getElementById('previewChangesBtn');
@@ -1805,6 +2217,7 @@ const ExportManager = {
       State.filters = [];
       State.modifications = [];
       State.modifiedRowIndices.clear();
+      State.changeLog = [];
       
       document.getElementById('fileInput').value = '';
       Navigation.goToStep(1);
