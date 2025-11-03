@@ -431,6 +431,84 @@ html,body{
   font-size:11px;
   color:var(--muted);
 }
+/* Warning Box para columnas inconsistentes */
+.warning-box {
+background: linear-gradient(135deg, #78350f 0%, #1e293b 100%);
+border: 2px solid var(--warning);
+border-radius: 12px;
+padding: 20px;
+margin-bottom: 20px;
+}
+
+.warning-box h3 {
+color: var(--warning);
+font-size: 18px;
+font-weight: 700;
+margin: 0 0 12px;
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+.warning-box p {
+color: var(--text);
+font-size: 14px;
+line-height: 1.6;
+margin: 0 0 16px;
+}
+
+.file-columns-list {
+background: rgba(0, 0, 0, 0.3);
+border: 1px solid var(--border);
+border-radius: 8px;
+padding: 12px;
+max-height: 300px;
+overflow-y: auto;
+}
+
+.file-columns-item {
+padding: 10px;
+margin-bottom: 8px;
+background: rgba(124, 178, 255, 0.05);
+border: 1px solid var(--border);
+border-radius: 6px;
+}
+
+.file-columns-item .file-name-header {
+font-weight: 600;
+color: var(--accent);
+margin-bottom: 8px;
+font-size: 13px;
+}
+
+.file-columns-item .columns-list {
+display: flex;
+flex-wrap: wrap;
+gap: 6px;
+}
+
+.column-tag {
+display: inline-flex;
+align-items: center;
+padding: 4px 10px;
+background: var(--card);
+border: 1px solid var(--border);
+border-radius: 6px;
+font-size: 11px;
+color: var(--text);
+}
+
+.column-tag.missing {
+background: rgba(248, 113, 113, 0.2);
+border-color: var(--error);
+color: var(--error);
+}
+
+.column-tag.extra {
+background: rgba(251, 191, 36, 0.2);
+border-color: var(--warning);
+color: var(--warning);
+}
 </style>
 </head>
 <body>
@@ -522,6 +600,15 @@ html,body{
     <p class="description">
       Revisa los datos cargados. Verifica que las columnas y filas se hayan importado correctamente. (Solo se ven las 200 primeras lineas)
     </p>
+    <div id="columnWarningBox" class="warning-box hidden">
+      <h3>⚠️ Advertencia: Estructura de Columnas Inconsistente</h3>
+      <p>
+        Se han detectado diferencias en las columnas de los archivos importados. 
+        Los datos se han consolidado incluyendo todas las columnas encontradas, 
+        pero algunos archivos pueden tener campos vacíos donde no existía la columna original.
+      </p>
+      <div class="file-columns-list" id="fileColumnsList"></div>
+    </div>
 
     <div class="stats">
       <div class="stat-card">
@@ -769,7 +856,9 @@ const State = {
   filterLogic: 'or', 
   modifications: [],
   modifiedRowIndices: new Set(),
-  currentStep: 1
+  currentStep: 1,
+  fileColumnsInfo: [],
+  hasColumnMismatch: false // flag para detectar inconsistencias
 };
 
 const Utils = {
@@ -1066,8 +1155,10 @@ const FileLoader = {
       const headerRow = parseInt(document.getElementById('headerRow').value) - 1;
 
       let allData = [];
-      let columns = [];
+      let allColumns = new Set();
+      let fileColumnsInfo = []; 
 
+      // Procesar cada archivo
       for (const file of State.files) {
         const isExcel = file.name.match(/\.(xlsx|xls)$/i);
         let rawData;
@@ -1082,16 +1173,57 @@ const FileLoader = {
 
         const normalized = Utils.normalizeData(rawData, headerRow);
         
-        if (columns.length === 0) {
-          columns = normalized.columns;
-        }
+        fileColumnsInfo.push({
+          fileName: file.name,
+          columns: [...normalized.columns],
+          rowCount: normalized.data.length
+        });
 
+        // Agregar todas las columnas al set global
+        normalized.columns.forEach(col => allColumns.add(col));
+        
         allData = allData.concat(normalized.data);
       }
 
-      State.columns = columns;
+      // Convertir set a array
+      const finalColumns = Array.from(allColumns);
+
+      //Detectar si hay discrepancias en columnas
+      let hasColumnMismatch = false;
+      if (State.files.length > 1) {
+        const firstFileColumns = new Set(fileColumnsInfo[0].columns);
+        for (let i = 1; i < fileColumnsInfo.length; i++) {
+          const currentColumns = new Set(fileColumnsInfo[i].columns);
+          if (firstFileColumns.size !== currentColumns.size) {
+            hasColumnMismatch = true;
+            break;
+          }
+          for (let col of firstFileColumns) {
+            if (!currentColumns.has(col)) {
+              hasColumnMismatch = true;
+              break;
+            }
+          }
+          if (hasColumnMismatch) break;
+        }
+      }
+
+      //Normalizar todas las filas para que tengan todas las columnas
+      allData = allData.map(row => {
+        const normalizedRow = { ...row };
+        finalColumns.forEach(col => {
+          if (!(col in normalizedRow)) {
+            normalizedRow[col] = '';
+          }
+        });
+        return normalizedRow;
+      });
+
+      State.columns = finalColumns;
       State.data = allData;
       State.originalData = JSON.parse(JSON.stringify(allData));
+      State.fileColumnsInfo = fileColumnsInfo; 
+      State.hasColumnMismatch = hasColumnMismatch;
 
       Utils.setStatus('success', `✅ ${allData.length} filas cargadas desde ${State.files.length} archivo(s)`, '✅');
       
@@ -1109,27 +1241,87 @@ const FileLoader = {
 // PREVIEW MANAGER (STEP 2)
 // ============================================
 const PreviewManager = {
-  render() {
-    const thead = document.getElementById('previewTableHead');
-    const tbody = document.getElementById('previewTableBody');
+render() {
+  const thead = document.getElementById('previewTableHead');
+  const tbody = document.getElementById('previewTableBody');
 
-    // Stats
-    document.getElementById('totalRows').textContent = State.data.length;
-    document.getElementById('totalColumns').textContent = State.columns.length;
-    document.getElementById('totalFiles').textContent = State.files.length;
+  // Stats
+  document.getElementById('totalRows').textContent = State.data.length;
+  document.getElementById('totalColumns').textContent = State.columns.length;
+  document.getElementById('totalFiles').textContent = State.files.length;
 
-    // Headers
-    const headers = State.columns.filter(col => !col.startsWith('_'));
-    thead.innerHTML = `<tr>${headers.map(col => `<th>${col}</th>`).join('')}</tr>`;
+  // NUEVO: Mostrar warning si hay inconsistencias
+  this.renderColumnWarning();
 
-    // Body (primeras 200 filas)
-    const displayData = State.data.slice(0, 200);
-    tbody.innerHTML = displayData.map(row => `
-      <tr>
-        ${headers.map(col => `<td>${row[col] || ''}</td>`).join('')}
-      </tr>
-    `).join('');
+  // Headers
+  const headers = State.columns.filter(col => !col.startsWith('_'));
+  thead.innerHTML = `<tr>${headers.map(col => `<th>${col}</th>`).join('')}</tr>`;
+
+  // Body (primeras 200 filas)
+  const displayData = State.data.slice(0, 200);
+  tbody.innerHTML = displayData.map(row => `
+    <tr>
+      ${headers.map(col => `<td>${row[col] || ''}</td>`).join('')}
+    </tr>
+  `).join('');
+},
+
+// NUEVO: Renderizar warning de columnas inconsistentes
+renderColumnWarning() {
+  const warningBox = document.getElementById('columnWarningBox');
+  const fileColumnsList = document.getElementById('fileColumnsList');
+
+  if (!State.hasColumnMismatch || State.files.length <= 1) {
+    warningBox.classList.add('hidden');
+    return;
   }
+
+  warningBox.classList.remove('hidden');
+
+  // Obtener todas las columnas únicas
+  const allColumns = new Set(State.columns.filter(col => !col.startsWith('_')));
+
+  // Generar HTML para cada archivo
+  const filesHTML = State.fileColumnsInfo.map((fileInfo, index) => {
+    const fileColumns = new Set(fileInfo.columns.filter(col => !col.startsWith('_')));
+    
+    // Columnas que le faltan a este archivo
+    const missingColumns = [...allColumns].filter(col => !fileColumns.has(col));
+    
+    // Columnas que tiene este archivo
+    const presentColumns = [...fileColumns];
+
+    return `
+      <div class="file-columns-item">
+        <div class="file-name-header">
+          📄 ${fileInfo.fileName} 
+          <span style="color:var(--muted);font-weight:400;font-size:11px;">
+            (${fileInfo.rowCount} filas, ${fileColumns.size} columnas)
+          </span>
+        </div>
+        <div class="columns-list">
+          ${presentColumns.map(col => 
+            `<span class="column-tag">${col}</span>`
+          ).join('')}
+          ${missingColumns.length > 0 ? 
+            missingColumns.map(col => 
+              `<span class="column-tag missing">❌ ${col}</span>`
+            ).join('') 
+            : ''
+          }
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  fileColumnsList.innerHTML = filesHTML;
+
+  // Actualizar status
+  Utils.setStatus('warning', 
+    `⚠️ Archivos con estructuras diferentes detectados. Revisa la advertencia en el Paso 2.`, 
+    '⚠️'
+  );
+}
 };
 
 // ============================================
@@ -1512,9 +1704,21 @@ const ExportManager = {
   },
 
   setupEvents() {
+    const exportBtn = document.getElementById('exportDataBtn');
+    const newExportBtn = exportBtn.cloneNode(true);
+    exportBtn.replaceWith(newExportBtn);
+
+    const resetBtn = document.getElementById('resetAllBtn');
+    const newResetBtn = resetBtn.cloneNode(true);
+    resetBtn.replaceWith(newResetBtn);
+
+    const scopeSelect = document.getElementById('exportScope');
+    const newScopeSelect = scopeSelect.cloneNode(true);
+    scopeSelect.replaceWith(newScopeSelect);
+
+    // Añadir listeners frescos
     document.getElementById('exportDataBtn').addEventListener('click', () => this.exportData());
     document.getElementById('resetAllBtn').addEventListener('click', () => this.resetAll());
-    
     document.getElementById('exportScope').addEventListener('change', () => this.updatePreview());
   },
 
