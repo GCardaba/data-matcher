@@ -1,1624 +1,1946 @@
 <html lang="es">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Data Editor Pro — Editor Masivo de Datos</title>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Data Editor Pro — Editor Masivo de Datos</title>
 
-<link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
 
-<!-- SheetJS para soporte Excel -->
-<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <!-- SheetJS para soporte Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 
-<style>
-:root{
-  --bg:#0d1220;
-  --card:#111a2b;
-  --card2:#0f172a;
-  --text:#f0f4ff;
-  --muted:#a5b4ce;
-  --border:#2a3957;
-  --accent:#7cb2ff;
-  --accent-hover:#5a9ae8;
-  --success:#4ade80;
-  --warning:#fbbf24;
-  --error:#f87171;
-  --ink:#081629;
-}
+    <style>
+      :root {
+        --bg: #0d1220;
+        --card: #111a2b;
+        --card2: #0f172a;
+        --text: #f0f4ff;
+        --muted: #a5b4ce;
+        --border: #2a3957;
+        --accent: #7cb2ff;
+        --accent-hover: #5a9ae8;
+        --success: #4ade80;
+        --warning: #fbbf24;
+        --error: #f87171;
+        --ink: #081629;
+      }
 
-*{box-sizing:border-box;}
-html,body{
-  margin:0;
-  padding:0;
-  background:var(--bg);
-  color:var(--text);
-  font:15px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Ubuntu,sans-serif;
-  -webkit-font-smoothing:antialiased;
-}
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Ubuntu, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
 
-.container{
-  max-width:1400px;
-  margin:0 auto;
-  padding:20px;
-}
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+      }
 
-/* Header */
-.header{
-  margin-bottom:24px;
-}
-.header h1{
-  font-size:32px;
-  font-weight:800;
-  margin:0 0 8px;
-  background:linear-gradient(135deg, var(--accent) 0%, var(--success) 100%);
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-  background-clip:text;
-}
-.header .subtitle{
-  color:var(--muted);
-  font-size:14px;
-}
+      /* Header */
+      .header {
+        margin-bottom: 24px;
+      }
+      .header h1 {
+        font-size: 32px;
+        font-weight: 800;
+        margin: 0 0 8px;
+        background: linear-gradient(
+          135deg,
+          var(--accent) 0%,
+          var(--success) 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .header .subtitle {
+        color: var(--muted);
+        font-size: 14px;
+      }
 
-/* Status Bar */
-.status-bar{
-  background:linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:16px 20px;
-  margin-bottom:20px;
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
-.status-bar .icon{
-  font-size:20px;
-}
-.status-bar.info{border-color:#3b82f6;background:linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%);}
-.status-bar.success{border-color:var(--success);background:linear-gradient(135deg, #065f46 0%, #1e293b 100%);}
-.status-bar.warning{border-color:var(--warning);background:linear-gradient(135deg, #78350f 0%, #1e293b 100%);}
-.status-bar.error{border-color:var(--error);background:linear-gradient(135deg, #7f1d1d 0%, #1e293b 100%);}
+      /* Status Bar */
+      .status-bar {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .status-bar .icon {
+        font-size: 20px;
+      }
+      .status-bar.info {
+        border-color: #3b82f6;
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%);
+      }
+      .status-bar.success {
+        border-color: var(--success);
+        background: linear-gradient(135deg, #065f46 0%, #1e293b 100%);
+      }
+      .status-bar.warning {
+        border-color: var(--warning);
+        background: linear-gradient(135deg, #78350f 0%, #1e293b 100%);
+      }
+      .status-bar.error {
+        border-color: var(--error);
+        background: linear-gradient(135deg, #7f1d1d 0%, #1e293b 100%);
+      }
 
-/* Stepper */
-.stepper{
-  display:flex;
-  gap:12px;
-  margin-bottom:24px;
-  flex-wrap:wrap;
-}
-.step{
-  flex:1;
-  min-width:150px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:12px 16px;
-  background:var(--card);
-  border:2px solid var(--border);
-  border-radius:12px;
-  transition:all 0.3s ease;
-  cursor:pointer;
-}
-.step:hover{
-  border-color:var(--accent);
-  transform:translateY(-2px);
-}
-.step.active{
-  border-color:var(--accent);
-  background:linear-gradient(135deg, #1e3a8a 0%, var(--card) 100%);
-  box-shadow:0 4px 12px rgba(124,178,255,0.2);
-}
-.step.completed{
-  border-color:var(--success);
-  background:linear-gradient(135deg, #065f46 0%, var(--card) 100%);
-}
-.step-number{
-  width:32px;
-  height:32px;
-  border-radius:50%;
-  background:var(--border);
-  display:grid;
-  place-items:center;
-  font-weight:700;
-  font-size:14px;
-}
-.step.active .step-number{
-  background:var(--accent);
-  color:var(--ink);
-}
-.step.completed .step-number{
-  background:var(--success);
-  color:var(--ink);
-}
-.step-label{
-  font-weight:600;
-  font-size:14px;
-}
+      /* Stepper */
+      .stepper {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+      }
+      .step {
+        flex: 1;
+        min-width: 150px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        background: var(--card);
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+      .step:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+      }
+      .step.active {
+        border-color: var(--accent);
+        background: linear-gradient(135deg, #1e3a8a 0%, var(--card) 100%);
+        box-shadow: 0 4px 12px rgba(124, 178, 255, 0.2);
+      }
+      .step.completed {
+        border-color: var(--success);
+        background: linear-gradient(135deg, #065f46 0%, var(--card) 100%);
+      }
+      .step-number {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--border);
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        font-size: 14px;
+      }
+      .step.active .step-number {
+        background: var(--accent);
+        color: var(--ink);
+      }
+      .step.completed .step-number {
+        background: var(--success);
+        color: var(--ink);
+      }
+      .step-label {
+        font-weight: 600;
+        font-size: 14px;
+      }
 
-/* Card */
-.card{
-  background:linear-gradient(180deg, var(--card) 0%, var(--card2) 100%);
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:24px;
-  margin-bottom:20px;
-  box-shadow:0 4px 24px rgba(0,0,0,0.3);
-}
+      /* Card */
+      .card {
+        background: linear-gradient(180deg, var(--card) 0%, var(--card2) 100%);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 24px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+      }
 
-.card h2{
-  font-size:22px;
-  font-weight:700;
-  margin:0 0 8px;
-  color:var(--accent);
-}
-.card .description{
-  color:var(--muted);
-  font-size:13px;
-  margin-bottom:20px;
-  line-height:1.5;
-}
+      .card h2 {
+        font-size: 22px;
+        font-weight: 700;
+        margin: 0 0 8px;
+        color: var(--accent);
+      }
+      .card .description {
+        color: var(--muted);
+        font-size: 13px;
+        margin-bottom: 20px;
+        line-height: 1.5;
+      }
 
-/* Subsection styling */
-.subsection{
-  background:rgba(124,178,255,0.03);
-  border:1px solid var(--border);
-  border-radius:10px;
-  padding:20px;
-  margin-bottom:24px;
-}
-.subsection h3{
-  font-size:18px;
-  font-weight:700;
-  margin:0 0 16px;
-  color:var(--success);
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
+      /* Subsection styling */
+      .subsection {
+        background: rgba(124, 178, 255, 0.03);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 24px;
+      }
+      .subsection h3 {
+        font-size: 18px;
+        font-weight: 700;
+        margin: 0 0 16px;
+        color: var(--success);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
 
-/* Form Elements */
-.form-group{
-  margin-bottom:16px;
-}
-.form-label{
-  display:block;
-  font-weight:600;
-  margin-bottom:8px;
-  font-size:14px;
-}
-.form-input,
-.form-select,
-.form-textarea{
-  width:100%;
-  padding:10px 14px;
-  background:#0a1628;
-  border:1px solid var(--border);
-  border-radius:8px;
-  color:var(--text);
-  font-size:14px;
-  transition:all 0.2s;
-}
-.form-input:focus,
-.form-select:focus,
-.form-textarea:focus{
-  outline:none;
-  border-color:var(--accent);
-  box-shadow:0 0 0 3px rgba(124,178,255,0.1);
-}
-.form-input[type="file"]{
-  padding:8px;
-  cursor:pointer;
-}
+      /* Form Elements */
+      .form-group {
+        margin-bottom: 16px;
+      }
+      .form-label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 14px;
+      }
+      .form-input,
+      .form-select,
+      .form-textarea {
+        width: 100%;
+        padding: 10px 14px;
+        background: #0a1628;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text);
+        font-size: 14px;
+        transition: all 0.2s;
+      }
+      .form-input:focus,
+      .form-select:focus,
+      .form-textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(124, 178, 255, 0.1);
+      }
+      .form-input[type="file"] {
+        padding: 8px;
+        cursor: pointer;
+      }
 
-/* Grid Layout */
-.grid{
-  display:grid;
-  gap:16px;
-}
-.grid-2{grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));}
-.grid-3{grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));}
-.grid-4{grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));}
+      /* Grid Layout */
+      .grid {
+        display: grid;
+        gap: 16px;
+      }
+      .grid-2 {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      }
+      .grid-3 {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      }
+      .grid-4 {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      }
 
-/* Buttons */
-.btn{
-  padding:10px 20px;
-  border:none;
-  border-radius:8px;
-  font-weight:600;
-  font-size:14px;
-  cursor:pointer;
-  transition:all 0.2s;
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-}
-.btn:disabled{
-  opacity:0.5;
-  cursor:not-allowed;
-}
-.btn:not(:disabled):hover{
-  transform:translateY(-2px);
-  box-shadow:0 4px 12px rgba(0,0,0,0.3);
-}
+      /* Buttons */
+      .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .btn:not(:disabled):hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
 
-.btn-primary{
-  background:var(--accent);
-  color:var(--ink);
-}
-.btn-primary:hover:not(:disabled){
-  background:var(--accent-hover);
-}
+      .btn-primary {
+        background: var(--accent);
+        color: var(--ink);
+      }
+      .btn-primary:hover:not(:disabled) {
+        background: var(--accent-hover);
+      }
 
-.btn-success{
-  background:var(--success);
-  color:var(--ink);
-}
+      .btn-success {
+        background: var(--success);
+        color: var(--ink);
+      }
 
-.btn-warning{
-  background:var(--warning);
-  color:var(--ink);
-}
+      .btn-warning {
+        background: var(--warning);
+        color: var(--ink);
+      }
 
-.btn-danger{
-  background:var(--error);
-  color:white;
-}
+      .btn-danger {
+        background: var(--error);
+        color: white;
+      }
 
-.btn-ghost{
-  background:transparent;
-  border:1px solid var(--border);
-  color:var(--text);
-}
-.btn-ghost:hover:not(:disabled){
-  border-color:var(--accent);
-  background:rgba(124,178,255,0.1);
-}
+      .btn-ghost {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text);
+      }
+      .btn-ghost:hover:not(:disabled) {
+        border-color: var(--accent);
+        background: rgba(124, 178, 255, 0.1);
+      }
 
-.btn-group{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  align-items:center;
-}
+      .btn-group {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
 
-/* Table */
-.table-container{
-  overflow:auto;
-  max-height:600px;
-  border:1px solid var(--border);
-  border-radius:12px;
-  background:var(--card2);
-}
-.data-table{
-  width:100%;
-  border-collapse:collapse;
-  font-size:13px;
-}
-.data-table thead{
-  position:sticky;
-  top:0;
-  z-index:10;
-  background:var(--card);
-}
-.data-table th{
-  padding:12px 10px;
-  text-align:left;
-  font-weight:600;
-  border-bottom:2px solid var(--border);
-  white-space:nowrap;
-  user-select:none;
-}
-.data-table th.sortable{
-  cursor:pointer;
-}
-.data-table th.sortable:hover{
-  background:rgba(124,178,255,0.1);
-}
-.data-table td{
-  padding:10px;
-  border-bottom:1px solid var(--border);
-}
-.data-table tbody tr:hover{
-  background:rgba(124,178,255,0.05);
-}
-.data-table tbody tr.filtered-out{
-  display:none;
-}
-.data-table tbody tr.modified{
-  background:rgba(74,222,128,0.1);
-}
+      /* Table */
+      .table-container {
+        overflow: auto;
+        max-height: 600px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--card2);
+      }
+      .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      .data-table thead {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: var(--card);
+      }
+      .data-table th {
+        padding: 12px 10px;
+        text-align: left;
+        font-weight: 600;
+        border-bottom: 2px solid var(--border);
+        white-space: nowrap;
+        user-select: none;
+      }
+      .data-table th.sortable {
+        cursor: pointer;
+      }
+      .data-table th.sortable:hover {
+        background: rgba(124, 178, 255, 0.1);
+      }
+      .data-table td {
+        padding: 10px;
+        border-bottom: 1px solid var(--border);
+      }
+      .data-table tbody tr:hover {
+        background: rgba(124, 178, 255, 0.05);
+      }
+      .data-table tbody tr.filtered-out {
+        display: none;
+      }
+      .data-table tbody tr.modified {
+        background: rgba(74, 222, 128, 0.1);
+      }
 
-/* Pills/Badges */
-.pill{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  padding:6px 12px;
-  border-radius:999px;
-  font-size:12px;
-  font-weight:600;
-  background:var(--border);
-  color:var(--text);
-}
-.pill.info{background:#1e3a8a;color:#93c5fd;}
-.pill.success{background:#065f46;color:#86efac;}
-.pill.warning{background:#78350f;color:#fcd34d;}
-.pill.error{background:#7f1d1d;color:#fca5a5;}
+      /* Pills/Badges */
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        background: var(--border);
+        color: var(--text);
+      }
+      .pill.info {
+        background: #1e3a8a;
+        color: #93c5fd;
+      }
+      .pill.success {
+        background: #065f46;
+        color: #86efac;
+      }
+      .pill.warning {
+        background: #78350f;
+        color: #fcd34d;
+      }
+      .pill.error {
+        background: #7f1d1d;
+        color: #fca5a5;
+      }
 
-/* Filter Section */
-.filter-item{
-  background:rgba(124,178,255,0.05);
-  border:1px solid var(--border);
-  border-radius:8px;
-  padding:16px;
-  margin-bottom:12px;
-}
-.filter-item .filter-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:12px;
-}
-.filter-item .filter-title{
-  font-weight:600;
-  font-size:14px;
-}
+      /* Filter Section */
+      .filter-item {
+        background: rgba(124, 178, 255, 0.05);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 12px;
+      }
+      .filter-item .filter-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .filter-item .filter-title {
+        font-weight: 600;
+        font-size: 14px;
+      }
 
-/* Editor Section */
-.editor-section{
-  background:rgba(74,222,128,0.05);
-  border:1px solid var(--success);
-  border-radius:8px;
-  padding:16px;
-  margin-top:16px;
-}
+      /* Editor Section */
+      .editor-section {
+        background: rgba(74, 222, 128, 0.05);
+        border: 1px solid var(--success);
+        border-radius: 8px;
+        padding: 16px;
+        margin-top: 16px;
+      }
 
-/* Hidden */
-.hidden{
-  display:none !important;
-}
+      /* Hidden */
+      .hidden {
+        display: none !important;
+      }
 
-/* Scrollbar */
-::-webkit-scrollbar{width:10px;height:10px;}
-::-webkit-scrollbar-track{background:var(--card2);}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:5px;}
-::-webkit-scrollbar-thumb:hover{background:var(--accent);}
+      /* Scrollbar */
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--card2);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 5px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--accent);
+      }
 
-/* Stats */
-.stats{
-  display:flex;
-  gap:12px;
-  flex-wrap:wrap;
-  margin-top:16px;
-}
-.stat-card{
-  flex:1;
-  min-width:150px;
-  padding:16px;
-  background:rgba(124,178,255,0.05);
-  border:1px solid var(--border);
-  border-radius:8px;
-}
-.stat-value{
-  font-size:24px;
-  font-weight:700;
-  color:var(--accent);
-}
-.stat-label{
-  font-size:12px;
-  color:var(--muted);
-  margin-top:4px;
-}
+      /* Stats */
+      .stats {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+      }
+      .stat-card {
+        flex: 1;
+        min-width: 150px;
+        padding: 16px;
+        background: rgba(124, 178, 255, 0.05);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+      }
+      .stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .stat-label {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
 
-/* File List */
-.file-list{
-  margin-top:12px;
-}
-.file-item{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:10px 12px;
-  background:rgba(124,178,255,0.05);
-  border:1px solid var(--border);
-  border-radius:8px;
-  margin-bottom:8px;
-}
-.file-name{
-  font-size:13px;
-  font-weight:500;
-}
-.file-meta{
-  font-size:11px;
-  color:var(--muted);
-}
-</style>
-</head>
-<body>
-
-<div class="container">
-  <div class="header">
-    <h1>📊 Data Editor Pro</h1>
-    <p class="subtitle">Editor masivo de archivos CSV y Excel con filtros y modificación de datos</p>
-  </div>
-
-  <div class="status-bar info" id="statusBar">
-    <span class="icon">ℹ️</span>
-    <span id="statusText">Paso 1: Sube uno o varios archivos CSV/Excel para comenzar</span>
-  </div>
-
-  <!-- Stepper (4 PASOS) -->
-  <div class="stepper">
-    <div class="step active" data-step="1">
-      <div class="step-number">1</div>
-      <div class="step-label">Cargar Archivos</div>
-    </div>
-    <div class="step" data-step="2">
-      <div class="step-number">2</div>
-      <div class="step-label">Previsualizar</div>
-    </div>
-    <div class="step" data-step="3">
-      <div class="step-number">3</div>
-      <div class="step-label">Filtros y Modificaciones</div>
-    </div>
-    <div class="step" data-step="4">
-      <div class="step-number">4</div>
-      <div class="step-label">Exportar</div>
-    </div>
-  </div>
-
-  <!-- STEP 1: Cargar Archivos -->
-  <section id="step1" class="card">
-    <h2>📁 Paso 1: Cargar Archivos</h2>
-    <p class="description">
-      Sube uno o varios archivos CSV o Excel (.xlsx, .xls). Los datos se consolidarán automáticamente.
-      Todos los archivos deben tener la misma estructura de columnas.
-    </p>
-
-    <div class="form-group">
-      <label class="form-label">Seleccionar archivos (CSV o Excel)</label>
-      <input type="file" id="fileInput" class="form-input" accept=".csv,.xlsx,.xls" multiple>
-    </div>
-
-    <div class="grid grid-3">
-      <div class="form-group">
-        <label class="form-label">Delimitador CSV</label>
-        <select id="csvDelimiter" class="form-select">
-          <option value="auto">Auto-detectar</option>
-          <option value=",">Coma (,)</option>
-          <option value=";">Punto y coma (;)</option>
-          <option value="\t">Tabulador</option>
-          <option value="|">Pipe (|)</option>
-        </select>
+      /* File List */
+      .file-list {
+        margin-top: 12px;
+      }
+      .file-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+        background: rgba(124, 178, 255, 0.05);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-bottom: 8px;
+      }
+      .file-name {
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .file-meta {
+        font-size: 11px;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>📊 Data Editor Pro</h1>
+        <p class="subtitle">
+          Editor masivo de archivos CSV y Excel con filtros y modificación de
+          datos
+        </p>
       </div>
 
-      <div class="form-group">
-        <label class="form-label">Codificación</label>
-        <select id="encoding" class="form-select">
-          <option value="utf-8">UTF-8</option>
-          <option value="windows-1252">Windows-1252</option>
-          <option value="iso-8859-1">ISO-8859-1</option>
-        </select>
+      <div class="status-bar info" id="statusBar">
+        <span class="icon">ℹ️</span>
+        <span id="statusText"
+          >Paso 1: Sube uno o varios archivos CSV/Excel para comenzar</span
+        >
       </div>
 
-      <div class="form-group">
-        <label class="form-label">Fila de encabezado</label>
-        <input type="number" id="headerRow" class="form-input" value="1" min="1">
-      </div>
-    </div>
-
-    <div class="btn-group">
-      <button id="loadFilesBtn" class="btn btn-primary" disabled>
-        📂 Cargar y Procesar Archivos
-      </button>
-      <span class="pill" id="fileCountPill">0 archivos seleccionados</span>
-    </div>
-
-    <div id="fileList" class="file-list hidden"></div>
-  </section>
-
-  <!-- STEP 2: Previsualizar -->
-  <section id="step2" class="card hidden">
-    <h2>👁️ Paso 2: Previsualizar Datos</h2>
-    <p class="description">
-      Revisa los datos cargados. Verifica que las columnas y filas se hayan importado correctamente. (Solo se ven las 200 primeras lineas)
-    </p>
-
-    <div class="stats">
-      <div class="stat-card">
-        <div class="stat-value" id="totalRows">0</div>
-        <div class="stat-label">Total de Filas</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value" id="totalColumns">0</div>
-        <div class="stat-label">Total de Columnas</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value" id="totalFiles">0</div>
-        <div class="stat-label">Archivos Cargados</div>
-      </div>
-    </div>
-
-    <div class="table-container" style="margin-top:20px;">
-      <table class="data-table" id="previewTable">
-        <thead id="previewTableHead"></thead>
-        <tbody id="previewTableBody"></tbody>
-      </table>
-    </div>
-
-    <div class="btn-group" style="margin-top:20px;">
-      <button id="backToStep1" class="btn btn-ghost">← Volver</button>
-      <button id="goToStep3" class="btn btn-primary">Siguiente: Filtros y Modificaciones →</button>
-    </div>
-  </section>
-
-  <!-- STEP 3: Filtros y Modificaciones (FUSIONADO) -->
-  <section id="step3" class="card hidden">
-    <h2>🔍✏️ Paso 3: Filtros y Modificaciones</h2>
-    <p class="description">
-      Aplica filtros para segmentar tus datos y modifica los valores de las filas visibles en tiempo real.
-      Los cambios se aplicarán solo a las filas que cumplan los filtros activos.
-    </p>
-
-    <!-- SUBSECCIÓN: FILTROS -->
-    <div class="subsection">
-      <h3>🔍 Filtros de Datos</h3>
-      
-      <div class="filter-item">
-        <div class="filter-header">
-          <div class="filter-title">Filtros Activos</div>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <div style="display:flex;align-items:center;gap:8px;background:rgba(124,178,255,0.1);padding:4px 8px;border-radius:8px;border:1px solid var(--border);">
-              <span style="font-size:11px;font-weight:600;color:var(--muted);">Modo:</span>
-              <button id="orFilterBtn" class="btn btn-primary" style="padding:4px 12px;font-size:11px;height:auto;">
-                OR
-              </button>
-              <button id="andFilterBtn" class="btn btn-ghost" style="padding:4px 12px;font-size:11px;height:auto;">
-                AND
-              </button>
-            </div>
-            <button id="clearFiltersBtn" class="btn btn-ghost" style="padding:6px 12px;font-size:12px;">
-              🗑️ Limpiar Todos
-            </button>
-          </div>
+      <!-- Stepper (4 PASOS) -->
+      <div class="stepper">
+        <div class="step active" data-step="1">
+          <div class="step-number">1</div>
+          <div class="step-label">Cargar Archivos</div>
         </div>
-        
-        <div style="background:rgba(124,178,255,0.08);border-radius:6px;padding:12px;margin-bottom:12px;">
-          <p style="margin:0;font-size:12px;line-height:1.6;color:var(--muted);">
-            <strong style="color:var(--text);">Modo OR:</strong> Muestra filas que cumplan <strong>al menos uno</strong> de los filtros.
-            <br><em>→ Ejemplo: columna "Market" contiene "AFG" OR contiene "CHI" → Afghanistan, Chile, China, etc.</em>
-            <br><br>
-            <strong style="color:var(--text);">Modo AND:</strong> Muestra filas que cumplan <strong>todos</strong> los filtros simultáneamente.
-            <br><em>→ Ejemplo: columna "Marca" contiene "Coca-Cola" AND columna "Market" contiene "CHI" → solo Coca-Cola en Chile.</em>
-          </p>
+        <div class="step" data-step="2">
+          <div class="step-number">2</div>
+          <div class="step-label">Previsualizar</div>
         </div>
-
-        <div id="filtersContainer">
-          <!-- Los filtros se añadirán dinámicamente aquí -->
+        <div class="step" data-step="3">
+          <div class="step-number">3</div>
+          <div class="step-label">Filtros y Modificaciones</div>
         </div>
-        <button id="addFilterBtn" class="btn btn-ghost" style="margin-top:12px;">
-          ➕ Añadir Filtro
-        </button>
-      </div>
-
-      <div class="stats">
-        <div class="stat-card">
-          <div class="stat-value" id="visibleRows">0</div>
-          <div class="stat-label">Filas Visibles</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="filteredRows">0</div>
-          <div class="stat-label">Filas Filtradas</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="filterPercentage">0%</div>
-          <div class="stat-label">% Visible</div>
+        <div class="step" data-step="4">
+          <div class="step-number">4</div>
+          <div class="step-label">Exportar</div>
         </div>
       </div>
-    </div>
 
-    <!-- SUBSECCIÓN: MODIFICACIONES -->
-    <div class="subsection">
-      <h3>✏️ Modificación de Datos</h3>
-      
-      <div class="editor-section">
+      <!-- STEP 1: Cargar Archivos -->
+      <section id="step1" class="card">
+        <h2>📁 Paso 1: Cargar Archivos</h2>
+        <p class="description">
+          Sube uno o varios archivos CSV o Excel (.xlsx, .xls). Los datos se
+          consolidarán automáticamente. Todos los archivos deben tener la misma
+          estructura de columnas.
+        </p>
+
+        <div class="form-group">
+          <label class="form-label">Seleccionar archivos (CSV o Excel)</label>
+          <input
+            type="file"
+            id="fileInput"
+            class="form-input"
+            accept=".csv,.xlsx,.xls"
+            multiple
+          />
+        </div>
+
         <div class="grid grid-3">
           <div class="form-group">
-            <label class="form-label">Campo a Modificar</label>
-            <select id="fieldToEdit" class="form-select"></select>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Tipo de Modificación</label>
-            <select id="modifyType" class="form-select">
-              <option value="replace">Reemplazar Valor</option>
-              <option value="append">Añadir al Final</option>
-              <option value="prepend">Añadir al Inicio</option>
-              <option value="clear">Limpiar Campo</option>
-              <option value="findReplace">Buscar y Reemplazar</option>
+            <label class="form-label">Delimitador CSV</label>
+            <select id="csvDelimiter" class="form-select">
+              <option value="auto">Auto-detectar</option>
+              <option value=",">Coma (,)</option>
+              <option value=";">Punto y coma (;)</option>
+              <option value="\t">Tabulador</option>
+              <option value="|">Pipe (|)</option>
             </select>
           </div>
 
-          <div class="form-group" id="newValueGroup">
-            <label class="form-label">Nuevo Valor</label>
-            <input type="text" id="newValue" class="form-input" placeholder="Introduce el nuevo valor">
+          <div class="form-group">
+            <label class="form-label">Codificación</label>
+            <select id="encoding" class="form-select">
+              <option value="utf-8">UTF-8</option>
+              <option value="windows-1252">Windows-1252</option>
+              <option value="iso-8859-1">ISO-8859-1</option>
+            </select>
           </div>
-        </div>
 
-        <div class="grid grid-2 hidden" id="findReplaceGroup">
           <div class="form-group">
-            <label class="form-label">Buscar Texto</label>
-            <input type="text" id="findText" class="form-input" placeholder="Texto a buscar">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Reemplazar Por</label>
-            <input type="text" id="replaceText" class="form-input" placeholder="Texto de reemplazo">
+            <label class="form-label">Fila de encabezado</label>
+            <input
+              type="number"
+              id="headerRow"
+              class="form-input"
+              value="1"
+              min="1"
+            />
           </div>
         </div>
 
         <div class="btn-group">
-          <button id="previewChangesBtn" class="btn btn-warning">
-            👁️ Previsualizar Cambios
+          <button id="loadFilesBtn" class="btn btn-primary" disabled>
+            📂 Cargar y Procesar Archivos
           </button>
-          <button id="applyChangesBtn" class="btn btn-success" disabled>
-            ✅ Aplicar Cambios
+          <span class="pill" id="fileCountPill">0 archivos seleccionados</span>
+        </div>
+
+        <div id="fileList" class="file-list hidden"></div>
+      </section>
+
+      <!-- STEP 2: Previsualizar -->
+      <section id="step2" class="card hidden">
+        <h2>👁️ Paso 2: Previsualizar Datos</h2>
+        <p class="description">
+          Revisa los datos cargados. Verifica que las columnas y filas se hayan
+          importado correctamente. (Solo se ven las 200 primeras lineas)
+        </p>
+
+        <div class="stats">
+          <div class="stat-card">
+            <div class="stat-value" id="totalRows">0</div>
+            <div class="stat-label">Total de Filas</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="totalColumns">0</div>
+            <div class="stat-label">Total de Columnas</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="totalFiles">0</div>
+            <div class="stat-label">Archivos Cargados</div>
+          </div>
+        </div>
+
+        <div class="table-container" style="margin-top: 20px">
+          <table class="data-table" id="previewTable">
+            <thead id="previewTableHead"></thead>
+            <tbody id="previewTableBody"></tbody>
+          </table>
+        </div>
+
+        <div class="btn-group" style="margin-top: 20px">
+          <button id="backToStep1" class="btn btn-ghost">← Volver</button>
+          <button id="goToStep3" class="btn btn-primary">
+            Siguiente: Filtros y Modificaciones →
           </button>
-          <button id="undoChangesBtn" class="btn btn-danger" disabled>
-            ↩️ Deshacer Cambios
+        </div>
+      </section>
+
+      <!-- STEP 3: Filtros y Modificaciones (FUSIONADO) -->
+      <section id="step3" class="card hidden">
+        <h2>🔍✏️ Paso 3: Filtros y Modificaciones</h2>
+        <p class="description">
+          Aplica filtros para segmentar tus datos y modifica los valores de las
+          filas visibles en tiempo real. Los cambios se aplicarán solo a las
+          filas que cumplan los filtros activos.
+        </p>
+
+        <!-- SUBSECCIÓN: FILTROS -->
+        <div class="subsection">
+          <h3>🔍 Filtros de Datos</h3>
+
+          <div class="filter-item">
+            <div class="filter-header">
+              <div class="filter-title">Filtros Activos</div>
+              <div style="display: flex; gap: 8px; align-items: center">
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    background: rgba(124, 178, 255, 0.1);
+                    padding: 4px 8px;
+                    border-radius: 8px;
+                    border: 1px solid var(--border);
+                  "
+                >
+                  <span
+                    style="
+                      font-size: 11px;
+                      font-weight: 600;
+                      color: var(--muted);
+                    "
+                    >Modo:</span
+                  >
+                  <button
+                    id="orFilterBtn"
+                    class="btn btn-primary"
+                    style="padding: 4px 12px; font-size: 11px; height: auto"
+                  >
+                    OR
+                  </button>
+                  <button
+                    id="andFilterBtn"
+                    class="btn btn-ghost"
+                    style="padding: 4px 12px; font-size: 11px; height: auto"
+                  >
+                    AND
+                  </button>
+                </div>
+                <button
+                  id="clearFiltersBtn"
+                  class="btn btn-ghost"
+                  style="padding: 6px 12px; font-size: 12px"
+                >
+                  🗑️ Limpiar Todos
+                </button>
+              </div>
+            </div>
+
+            <div
+              style="
+                background: rgba(124, 178, 255, 0.08);
+                border-radius: 6px;
+                padding: 12px;
+                margin-bottom: 12px;
+              "
+            >
+              <p
+                style="
+                  margin: 0;
+                  font-size: 12px;
+                  line-height: 1.6;
+                  color: var(--muted);
+                "
+              >
+                <strong style="color: var(--text)">Modo OR:</strong> Muestra
+                filas que cumplan <strong>al menos uno</strong> de los filtros.
+                <br /><em
+                  >→ Ejemplo: columna "Market" contiene "AFG" OR contiene "CHI"
+                  → Afghanistan, Chile, China, etc.</em
+                >
+                <br /><br />
+                <strong style="color: var(--text)">Modo AND:</strong> Muestra
+                filas que cumplan <strong>todos</strong> los filtros
+                simultáneamente. <br /><em
+                  >→ Ejemplo: columna "Marca" contiene "Coca-Cola" AND columna
+                  "Market" contiene "CHI" → solo Coca-Cola en Chile.</em
+                >
+              </p>
+            </div>
+
+            <div id="filtersContainer">
+              <!-- Los filtros se añadirán dinámicamente aquí -->
+            </div>
+            <button
+              id="addFilterBtn"
+              class="btn btn-ghost"
+              style="margin-top: 12px"
+            >
+              ➕ Añadir Filtro
+            </button>
+          </div>
+
+          <div class="stats">
+            <div class="stat-card">
+              <div class="stat-value" id="visibleRows">0</div>
+              <div class="stat-label">Filas Visibles</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="filteredRows">0</div>
+              <div class="stat-label">Filas Filtradas</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="filterPercentage">0%</div>
+              <div class="stat-label">% Visible</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUBSECCIÓN: MODIFICACIONES -->
+        <div class="subsection">
+          <h3>✏️ Modificación de Datos</h3>
+
+          <div class="editor-section">
+            <div class="grid grid-3">
+              <div class="form-group">
+                <label class="form-label">Campo a Modificar</label>
+                <select id="fieldToEdit" class="form-select"></select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Tipo de Modificación</label>
+                <select id="modifyType" class="form-select">
+                  <option value="replace">Reemplazar Valor</option>
+                  <option value="append">Añadir al Final</option>
+                  <option value="prepend">Añadir al Inicio</option>
+                  <option value="clear">Limpiar Campo</option>
+                  <option value="findReplace">Buscar y Reemplazar</option>
+                </select>
+              </div>
+
+              <div class="form-group" id="newValueGroup">
+                <label class="form-label">Nuevo Valor</label>
+                <input
+                  type="text"
+                  id="newValue"
+                  class="form-input"
+                  placeholder="Introduce el nuevo valor"
+                />
+              </div>
+            </div>
+
+            <div class="grid grid-2 hidden" id="findReplaceGroup">
+              <div class="form-group">
+                <label class="form-label">Buscar Texto</label>
+                <input
+                  type="text"
+                  id="findText"
+                  class="form-input"
+                  placeholder="Texto a buscar"
+                />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Reemplazar Por</label>
+                <input
+                  type="text"
+                  id="replaceText"
+                  class="form-input"
+                  placeholder="Texto de reemplazo"
+                />
+              </div>
+            </div>
+
+            <div class="btn-group">
+              <button id="previewChangesBtn" class="btn btn-warning">
+                👁️ Previsualizar Cambios
+              </button>
+              <button id="applyChangesBtn" class="btn btn-success" disabled>
+                ✅ Aplicar Cambios
+              </button>
+              <button id="undoChangesBtn" class="btn btn-danger" disabled>
+                ↩️ Deshacer Cambios
+              </button>
+              <span class="pill info" id="changesPill"
+                >0 filas serán modificadas</span
+              >
+            </div>
+          </div>
+
+          <div class="stats" style="margin-top: 20px">
+            <div class="stat-card">
+              <div class="stat-value" id="modifiedRows">0</div>
+              <div class="stat-label">Filas Modificadas</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="affectedRows">0</div>
+              <div class="stat-label">Filas Afectadas</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TABLA UNIFICADA -->
+        <div class="table-container" style="margin-top: 20px">
+          <table class="data-table" id="unifiedTable">
+            <thead id="unifiedTableHead"></thead>
+            <tbody id="unifiedTableBody"></tbody>
+          </table>
+        </div>
+
+        <div class="btn-group" style="margin-top: 20px">
+          <button id="backToStep2" class="btn btn-ghost">← Volver</button>
+          <button id="goToStep4" class="btn btn-primary">
+            Siguiente: Exportar →
           </button>
-          <span class="pill info" id="changesPill">0 filas serán modificadas</span>
         </div>
-      </div>
+      </section>
 
-      <div class="stats" style="margin-top:20px;">
-        <div class="stat-card">
-          <div class="stat-value" id="modifiedRows">0</div>
-          <div class="stat-label">Filas Modificadas</div>
+      <!-- STEP 4: Exportar (ANTIGUO STEP 5) -->
+      <section id="step4" class="card hidden">
+        <h2>💾 Paso 4: Exportar Resultados</h2>
+        <p class="description">
+          Exporta los datos modificados en formato CSV o Excel. Puedes exportar
+          todas las filas o solo las filas visibles (filtradas).
+        </p>
+
+        <div class="stats">
+          <div class="stat-card">
+            <div class="stat-value" id="exportTotalRows">0</div>
+            <div class="stat-label">Total de Filas</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="exportModifiedRows">0</div>
+            <div class="stat-label">Filas Modificadas</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="exportVisibleRows">0</div>
+            <div class="stat-label">Filas Visibles</div>
+          </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-value" id="affectedRows">0</div>
-          <div class="stat-label">Filas Afectadas</div>
+
+        <div class="grid grid-2" style="margin-top: 20px">
+          <div class="form-group">
+            <label class="form-label">Formato de Exportación</label>
+            <select id="exportFormat" class="form-select">
+              <option value="csv">CSV</option>
+              <option value="xlsx">Excel (.xlsx)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Qué Exportar</label>
+            <select id="exportScope" class="form-select">
+              <option value="all">Todas las Filas</option>
+              <option value="visible">Solo Filas Visibles (Filtradas)</option>
+              <option value="modified">Solo Filas Modificadas</option>
+            </select>
+          </div>
         </div>
-      </div>
+
+        <div class="table-container" style="margin-top: 20px">
+          <table class="data-table" id="exportTable">
+            <thead id="exportTableHead"></thead>
+            <tbody id="exportTableBody"></tbody>
+          </table>
+        </div>
+
+        <div class="btn-group" style="margin-top: 20px">
+          <button id="backToStep3" class="btn btn-ghost">← Volver</button>
+          <button id="exportDataBtn" class="btn btn-success">
+            💾 Exportar Datos
+          </button>
+          <button id="resetAllBtn" class="btn btn-danger">
+            🔄 Reiniciar Todo
+          </button>
+        </div>
+      </section>
     </div>
 
-    <!-- TABLA UNIFICADA -->
-    <div class="table-container" style="margin-top:20px;">
-      <table class="data-table" id="unifiedTable">
-        <thead id="unifiedTableHead"></thead>
-        <tbody id="unifiedTableBody"></tbody>
-      </table>
-    </div>
-
-    <div class="btn-group" style="margin-top:20px;">
-      <button id="backToStep2" class="btn btn-ghost">← Volver</button>
-      <button id="goToStep4" class="btn btn-primary">Siguiente: Exportar →</button>
-    </div>
-  </section>
-
-  <!-- STEP 4: Exportar (ANTIGUO STEP 5) -->
-  <section id="step4" class="card hidden">
-    <h2>💾 Paso 4: Exportar Resultados</h2>
-    <p class="description">
-      Exporta los datos modificados en formato CSV o Excel. Puedes exportar todas las filas
-      o solo las filas visibles (filtradas).
-    </p>
-
-    <div class="stats">
-      <div class="stat-card">
-        <div class="stat-value" id="exportTotalRows">0</div>
-        <div class="stat-label">Total de Filas</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value" id="exportModifiedRows">0</div>
-        <div class="stat-label">Filas Modificadas</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value" id="exportVisibleRows">0</div>
-        <div class="stat-label">Filas Visibles</div>
-      </div>
-    </div>
-
-    <div class="grid grid-2" style="margin-top:20px;">
-      <div class="form-group">
-        <label class="form-label">Formato de Exportación</label>
-        <select id="exportFormat" class="form-select">
-          <option value="csv">CSV</option>
-          <option value="xlsx">Excel (.xlsx)</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Qué Exportar</label>
-        <select id="exportScope" class="form-select">
-          <option value="all">Todas las Filas</option>
-          <option value="visible">Solo Filas Visibles (Filtradas)</option>
-          <option value="modified">Solo Filas Modificadas</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="table-container" style="margin-top:20px;">
-      <table class="data-table" id="exportTable">
-        <thead id="exportTableHead"></thead>
-        <tbody id="exportTableBody"></tbody>
-      </table>
-    </div>
-
-    <div class="btn-group" style="margin-top:20px;">
-      <button id="backToStep3" class="btn btn-ghost">← Volver</button>
-      <button id="exportDataBtn" class="btn btn-success">
-        💾 Exportar Datos
-      </button>
-      <button id="resetAllBtn" class="btn btn-danger">
-        🔄 Reiniciar Todo
-      </button>
-    </div>
-  </section>
-</div>
-
-<script>
-// ============================================
-// GLOBAL STATE & UTILITIES
-// ============================================
-const State = {
-  files: [],
-  columns: [],
-  data: [],
-  originalData: [],
-  filters: [],
-  filterLogic: 'or', 
-  modifications: [],
-  modifiedRowIndices: new Set(),
-  currentStep: 1
-};
-
-const Utils = {
-  // Detectar delimitador CSV
-  detectDelimiter(text) {
-    const delimiters = [',', ';', '\t', '|'];
-    const lines = text.split('\n').slice(0, 5);
-    const counts = delimiters.map(delim => {
-      const counts = lines.map(line => (line.match(new RegExp(`\\${delim}`, 'g')) || []).length);
-      const avg = counts.reduce((a, b) => a + b, 0) / counts.length;
-      const variance = counts.reduce((a, b) => a + Math.pow(b - avg, 2), 0) / counts.length;
-      return { delim, score: avg / (1 + variance) };
-    });
-    counts.sort((a, b) => b.score - a.score);
-    return counts[0].delim;
-  },
-
-  // Parsear CSV
-  parseCSV(text, delimiter) {
-    const lines = [];
-    let current = '';
-    let inQuotes = false;
-    let row = [];
-
-    for (let i = 0; i < text.length; i++) {
-      const char = text[i];
-      const nextChar = text[i + 1];
-
-      if (char === '"') {
-        if (inQuotes && nextChar === '"') {
-          current += '"';
-          i++;
-        } else {
-          inQuotes = !inQuotes;
-        }
-      } else if (char === delimiter && !inQuotes) {
-        row.push(current);
-        current = '';
-      } else if (char === '\n' && !inQuotes) {
-        row.push(current);
-        lines.push(row);
-        row = [];
-        current = '';
-      } else if (char !== '\r') {
-        current += char;
-      }
-    }
-
-    if (current || row.length) {
-      row.push(current);
-      lines.push(row);
-    }
-
-    return lines.filter(line => line.some(cell => cell.trim()));
-  },
-
-  // Leer archivo como texto
-  async readFileAsText(file, encoding = 'utf-8') {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = e => resolve(e.target.result);
-      reader.onerror = reject;
-      reader.readAsText(file, encoding);
-    });
-  },
-
-  // Procesar archivo Excel
-  async processExcelFile(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = e => {
-        try {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-          resolve(jsonData);
-        } catch (error) {
-          reject(error);
-        }
+    <script>
+      // ============================================
+      // GLOBAL STATE & UTILITIES
+      // ============================================
+      const State = {
+        files: [],
+        columns: [],
+        data: [],
+        originalData: [],
+        filters: [],
+        filterLogic: "or",
+        modifications: [],
+        modifiedRowIndices: new Set(),
+        currentStep: 1,
       };
-      reader.onerror = reject;
-      reader.readAsArrayBuffer(file);
-    });
-  },
 
-  // Normalizar datos
-  normalizeData(rawData, headerRowIndex = 0) {
-    if (!rawData || rawData.length === 0) return { columns: [], data: [] };
-    
-    const headers = rawData[headerRowIndex];
-    const columns = headers.map((h, i) => h || `Column_${i + 1}`);
-    
-    const data = rawData.slice(headerRowIndex + 1).map((row, rowIndex) => {
-      const obj = { _rowId: rowIndex, _modified: false };
-      columns.forEach((col, i) => {
-        obj[col] = row[i] !== undefined ? row[i] : '';
-      });
-      return obj;
-    });
+      const Utils = {
+        // Detectar delimitador CSV
+        detectDelimiter(text) {
+          const delimiters = [",", ";", "\t", "|"];
+          const lines = text.split("\n").slice(0, 5);
+          const counts = delimiters.map((delim) => {
+            const counts = lines.map(
+              (line) => (line.match(new RegExp(`\\${delim}`, "g")) || []).length
+            );
+            const avg = counts.reduce((a, b) => a + b, 0) / counts.length;
+            const variance =
+              counts.reduce((a, b) => a + Math.pow(b - avg, 2), 0) /
+              counts.length;
+            return { delim, score: avg / (1 + variance) };
+          });
+          counts.sort((a, b) => b.score - a.score);
+          return counts[0].delim;
+        },
 
-    return { columns, data };
-  },
+        // Parsear CSV
+        parseCSV(text, delimiter) {
+          const lines = [];
+          let current = "";
+          let inQuotes = false;
+          let row = [];
 
-  // Aplicar filtros (lógica OR/AND dinámica)
-  applyFilters(data, filters) {
-    if (!filters || filters.length === 0) return data;
+          for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            const nextChar = text[i + 1];
 
-    // Filtrar solo filtros válidos
-    const validFilters = filters.filter(f => {
-      if (!f.column || !f.operator) return false;
-      // Para operadores que no necesitan valor
-      if (['empty', 'notEmpty'].includes(f.operator)) return true;
-      // Para el resto, necesitan valor
-      return f.value && String(f.value).trim() !== '';
-    });
+            if (char === '"') {
+              if (inQuotes && nextChar === '"') {
+                current += '"';
+                i++;
+              } else {
+                inQuotes = !inQuotes;
+              }
+            } else if (char === delimiter && !inQuotes) {
+              row.push(current);
+              current = "";
+            } else if (char === "\n" && !inQuotes) {
+              row.push(current);
+              lines.push(row);
+              row = [];
+              current = "";
+            } else if (char !== "\r") {
+              current += char;
+            }
+          }
 
-    if (validFilters.length === 0) return data;
+          if (current || row.length) {
+            row.push(current);
+            lines.push(row);
+          }
 
-    const logicMethod = State.filterLogic === 'or' ? 'some' : 'every';
+          return lines.filter((line) => line.some((cell) => cell.trim()));
+        },
 
-    return data.filter(row => {
-      return validFilters[logicMethod](filter => {
-        const value = String(row[filter.column] || '').toLowerCase();
-        const filterValue = String(filter.value || '').toLowerCase();
+        // Leer archivo como texto
+        async readFileAsText(file, encoding = "utf-8") {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = reject;
+            reader.readAsText(file, encoding);
+          });
+        },
 
-        switch (filter.operator) {
-          case 'contains':
-            return value.includes(filterValue);
-          case 'notContains':
-            return !value.includes(filterValue);
-          case 'equals':
-            return value === filterValue;
-          case 'notEquals':
-            return value !== filterValue;
-          case 'startsWith':
-            return value.startsWith(filterValue);
-          case 'endsWith':
-            return value.endsWith(filterValue);
-          case 'empty':
-            return value === '';
-          case 'notEmpty':
-            return value !== '';
-          default:
-            return false;
-        }
-      });
-    });
-  },
+        // Procesar archivo Excel
+        async processExcelFile(file) {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: "array" });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet, {
+                  header: 1,
+                });
+                resolve(jsonData);
+              } catch (error) {
+                reject(error);
+              }
+            };
+            reader.onerror = reject;
+            reader.readAsArrayBuffer(file);
+          });
+        },
 
-  // Exportar CSV
-  exportToCSV(data, columns, filename = 'export.csv') {
-    const headers = columns.filter(col => !col.startsWith('_'));
-    const csvContent = [
-      headers.join(','),
-      ...data.map(row => 
-        headers.map(col => {
-          const value = String(row[col] || '');
-          return value.includes(',') || value.includes('"') || value.includes('\n')
-            ? `"${value.replace(/"/g, '""')}"`
-            : value;
-        }).join(',')
-      )
-    ].join('\n');
+        // Normalizar datos
+        normalizeData(rawData, headerRowIndex = 0) {
+          if (!rawData || rawData.length === 0)
+            return { columns: [], data: [] };
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = filename;
-    link.click();
-  },
+          const headers = rawData[headerRowIndex];
+          const columns = headers.map((h, i) => h || `Column_${i + 1}`);
 
-  // Exportar Excel
-  exportToExcel(data, columns, filename = 'export.xlsx') {
-    const headers = columns.filter(col => !col.startsWith('_'));
-    const wsData = [
-      headers,
-      ...data.map(row => headers.map(col => row[col]))
-    ];
+          const data = rawData
+            .slice(headerRowIndex + 1)
+            .map((row, rowIndex) => {
+              const obj = { _rowId: rowIndex, _modified: false };
+              columns.forEach((col, i) => {
+                obj[col] = row[i] !== undefined ? row[i] : "";
+              });
+              return obj;
+            });
 
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Data');
-    XLSX.writeFile(wb, filename);
-  },
+          return { columns, data };
+        },
 
-  // Actualizar status
-  setStatus(type, message, icon = 'ℹ️') {
-    const statusBar = document.getElementById('statusBar');
-    const statusText = document.getElementById('statusText');
-    const iconEl = statusBar.querySelector('.icon');
-    
-    statusBar.className = `status-bar ${type}`;
-    statusText.textContent = message;
-    iconEl.textContent = icon;
-  }
-};
+        // Aplicar filtros (lógica OR/AND dinámica)
+        applyFilters(data, filters) {
+          if (!filters || filters.length === 0) return data;
 
-// ============================================
-// STEP NAVIGATION
-// ============================================
-const Navigation = {
-  goToStep(step) {
-    // Ocultar todos los steps (ahora son 4)
-    for (let i = 1; i <= 4; i++) {
-      const section = document.getElementById(`step${i}`);
-      const stepEl = document.querySelector(`.step[data-step="${i}"]`);
-      
-      if (section) section.classList.toggle('hidden', i !== step);
-      if (stepEl) {
-        stepEl.classList.remove('active', 'completed');
-        if (i === step) stepEl.classList.add('active');
-        if (i < step) stepEl.classList.add('completed');
-      }
-    }
+          // Filtrar solo filtros válidos
+          const validFilters = filters.filter((f) => {
+            if (!f.column || !f.operator) return false;
+            // Para operadores que no necesitan valor
+            if (["empty", "notEmpty"].includes(f.operator)) return true;
+            // Para el resto, necesitan valor
+            return f.value && String(f.value).trim() !== "";
+          });
 
-    State.currentStep = step;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  },
+          if (validFilters.length === 0) return data;
 
-  setupNavigation() {
-    // Navegación entre pasos
-    document.getElementById('backToStep1')?.addEventListener('click', () => this.goToStep(1));
-    document.getElementById('backToStep2')?.addEventListener('click', () => this.goToStep(2));
-    document.getElementById('backToStep3')?.addEventListener('click', () => this.goToStep(3));
+          const logicMethod = State.filterLogic === "or" ? "some" : "every";
 
-    document.getElementById('goToStep3')?.addEventListener('click', () => {
-      this.goToStep(3);
-      UnifiedManager.init();
-    });
-    
-    document.getElementById('goToStep4')?.addEventListener('click', () => {
-      this.goToStep(4);
-      ExportManager.init();
-    });
+          return data.filter((row) => {
+            return validFilters[logicMethod]((filter) => {
+              const value = String(row[filter.column] || "").toLowerCase();
+              const filterValue = String(filter.value || "").toLowerCase();
 
-    // Click en stepper
-    document.querySelectorAll('.step').forEach(step => {
-      step.addEventListener('click', () => {
-        const stepNum = parseInt(step.getAttribute('data-step'));
-        if (stepNum <= State.currentStep || stepNum === State.currentStep + 1) {
-          this.goToStep(stepNum);
-          if (stepNum === 3) UnifiedManager.init();
-          if (stepNum === 4) ExportManager.init();
-        }
-      });
-    });
-  }
-};
+              switch (filter.operator) {
+                case "contains":
+                  return value.includes(filterValue);
+                case "notContains":
+                  return !value.includes(filterValue);
+                case "equals":
+                  return value === filterValue;
+                case "notEquals":
+                  return value !== filterValue;
+                case "startsWith":
+                  return value.startsWith(filterValue);
+                case "endsWith":
+                  return value.endsWith(filterValue);
+                case "empty":
+                  return value === "";
+                case "notEmpty":
+                  return value !== "";
+                default:
+                  return false;
+              }
+            });
+          });
+        },
 
-// ============================================
-// FILE LOADER (STEP 1)
-// ============================================
-const FileLoader = {
-  init() {
-    const fileInput = document.getElementById('fileInput');
-    const loadBtn = document.getElementById('loadFilesBtn');
-    const fileCountPill = document.getElementById('fileCountPill');
+        // Exportar CSV
+        exportToCSV(data, columns, filename = "export.csv") {
+          const headers = columns.filter((col) => !col.startsWith("_"));
+          const csvContent = [
+            headers.join(","),
+            ...data.map((row) =>
+              headers
+                .map((col) => {
+                  const value = String(row[col] || "");
+                  return value.includes(",") ||
+                    value.includes('"') ||
+                    value.includes("\n")
+                    ? `"${value.replace(/"/g, '""')}"`
+                    : value;
+                })
+                .join(",")
+            ),
+          ].join("\n");
 
-    fileInput.addEventListener('change', (e) => {
-      const files = Array.from(e.target.files);
-      State.files = files;
-      
-      fileCountPill.textContent = `${files.length} archivo${files.length !== 1 ? 's' : ''} seleccionado${files.length !== 1 ? 's' : ''}`;
-      loadBtn.disabled = files.length === 0;
+          const blob = new Blob([csvContent], {
+            type: "text/csv;charset=utf-8;",
+          });
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = filename;
+          link.click();
+        },
 
-      this.displayFileList(files);
-    });
+        // Exportar Excel
+        exportToExcel(data, columns, filename = "export.xlsx") {
+          const headers = columns.filter((col) => !col.startsWith("_"));
+          const wsData = [
+            headers,
+            ...data.map((row) => headers.map((col) => row[col])),
+          ];
 
-    loadBtn.addEventListener('click', () => this.loadFiles());
-  },
+          const ws = XLSX.utils.aoa_to_sheet(wsData);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, "Data");
+          XLSX.writeFile(wb, filename);
+        },
 
-  displayFileList(files) {
-    const fileList = document.getElementById('fileList');
-    const fileListContent = files.map(file => `
+        // Actualizar status
+        setStatus(type, message, icon = "ℹ️") {
+          const statusBar = document.getElementById("statusBar");
+          const statusText = document.getElementById("statusText");
+          const iconEl = statusBar.querySelector(".icon");
+
+          statusBar.className = `status-bar ${type}`;
+          statusText.textContent = message;
+          iconEl.textContent = icon;
+        },
+      };
+
+      // ============================================
+      // STEP NAVIGATION
+      // ============================================
+      const Navigation = {
+        goToStep(step) {
+          // Ocultar todos los steps (ahora son 4)
+          for (let i = 1; i <= 4; i++) {
+            const section = document.getElementById(`step${i}`);
+            const stepEl = document.querySelector(`.step[data-step="${i}"]`);
+
+            if (section) section.classList.toggle("hidden", i !== step);
+            if (stepEl) {
+              stepEl.classList.remove("active", "completed");
+              if (i === step) stepEl.classList.add("active");
+              if (i < step) stepEl.classList.add("completed");
+            }
+          }
+
+          State.currentStep = step;
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        },
+
+        setupNavigation() {
+          // Navegación entre pasos
+          document
+            .getElementById("backToStep1")
+            ?.addEventListener("click", () => this.goToStep(1));
+          document
+            .getElementById("backToStep2")
+            ?.addEventListener("click", () => this.goToStep(2));
+          document
+            .getElementById("backToStep3")
+            ?.addEventListener("click", () => this.goToStep(3));
+
+          document
+            .getElementById("goToStep3")
+            ?.addEventListener("click", () => {
+              this.goToStep(3);
+              UnifiedManager.init();
+            });
+
+          document
+            .getElementById("goToStep4")
+            ?.addEventListener("click", () => {
+              this.goToStep(4);
+              ExportManager.init();
+            });
+
+          // Click en stepper
+          document.querySelectorAll(".step").forEach((step) => {
+            step.addEventListener("click", () => {
+              const stepNum = parseInt(step.getAttribute("data-step"));
+              if (
+                stepNum <= State.currentStep ||
+                stepNum === State.currentStep + 1
+              ) {
+                this.goToStep(stepNum);
+                if (stepNum === 3) UnifiedManager.init();
+                if (stepNum === 4) ExportManager.init();
+              }
+            });
+          });
+        },
+      };
+
+      // ============================================
+      // FILE LOADER (STEP 1)
+      // ============================================
+      const FileLoader = {
+        init() {
+          const fileInput = document.getElementById("fileInput");
+          const loadBtn = document.getElementById("loadFilesBtn");
+          const fileCountPill = document.getElementById("fileCountPill");
+
+          fileInput.addEventListener("change", (e) => {
+            const files = Array.from(e.target.files);
+            State.files = files;
+
+            fileCountPill.textContent = `${files.length} archivo${
+              files.length !== 1 ? "s" : ""
+            } seleccionado${files.length !== 1 ? "s" : ""}`;
+            loadBtn.disabled = files.length === 0;
+
+            this.displayFileList(files);
+          });
+
+          loadBtn.addEventListener("click", () => this.loadFiles());
+        },
+
+        displayFileList(files) {
+          const fileList = document.getElementById("fileList");
+          const fileListContent = files
+            .map(
+              (file) => `
       <div class="file-item">
         <div>
           <div class="file-name">📄 ${file.name}</div>
           <div class="file-meta">${(file.size / 1024).toFixed(2)} KB</div>
         </div>
       </div>
-    `).join('');
+    `
+            )
+            .join("");
 
-    fileList.innerHTML = fileListContent;
-    fileList.classList.remove('hidden');
-  },
+          fileList.innerHTML = fileListContent;
+          fileList.classList.remove("hidden");
+        },
 
-  async loadFiles() {
-    try {
-      Utils.setStatus('info', 'Cargando archivos...', '⏳');
-      
-      const delimiter = document.getElementById('csvDelimiter').value;
-      const encoding = document.getElementById('encoding').value;
-      const headerRow = parseInt(document.getElementById('headerRow').value) - 1;
+        async loadFiles() {
+          try {
+            Utils.setStatus("info", "Cargando archivos...", "⏳");
 
-      let allData = [];
-      let columns = [];
+            const delimiter = document.getElementById("csvDelimiter").value;
+            const encoding = document.getElementById("encoding").value;
+            const headerRow =
+              parseInt(document.getElementById("headerRow").value) - 1;
 
-      for (const file of State.files) {
-        const isExcel = file.name.match(/\.(xlsx|xls)$/i);
-        let rawData;
+            let allData = [];
+            let columns = [];
 
-        if (isExcel) {
-          rawData = await Utils.processExcelFile(file);
-        } else {
-          const text = await Utils.readFileAsText(file, encoding);
-          const delim = delimiter === 'auto' ? Utils.detectDelimiter(text) : delimiter;
-          rawData = Utils.parseCSV(text, delim === '\\t' ? '\t' : delim);
-        }
+            for (const file of State.files) {
+              const isExcel = file.name.match(/\.(xlsx|xls)$/i);
+              let rawData;
 
-        const normalized = Utils.normalizeData(rawData, headerRow);
-        
-        if (columns.length === 0) {
-          columns = normalized.columns;
-        }
+              if (isExcel) {
+                rawData = await Utils.processExcelFile(file);
+              } else {
+                const text = await Utils.readFileAsText(file, encoding);
+                const delim =
+                  delimiter === "auto"
+                    ? Utils.detectDelimiter(text)
+                    : delimiter;
+                rawData = Utils.parseCSV(text, delim === "\\t" ? "\t" : delim);
+              }
 
-        allData = allData.concat(normalized.data);
-      }
+              const normalized = Utils.normalizeData(rawData, headerRow);
 
-      State.columns = columns;
-      State.data = allData;
-      State.originalData = JSON.parse(JSON.stringify(allData));
+              if (columns.length === 0) {
+                columns = normalized.columns;
+              }
 
-      Utils.setStatus('success', `✅ ${allData.length} filas cargadas desde ${State.files.length} archivo(s)`, '✅');
-      
-      PreviewManager.render();
-      Navigation.goToStep(2);
+              allData = allData.concat(normalized.data);
+            }
 
-    } catch (error) {
-      Utils.setStatus('error', `❌ Error al cargar archivos: ${error.message}`, '❌');
-      console.error(error);
-    }
-  }
-};
+            State.columns = columns;
+            State.data = allData;
+            State.originalData = JSON.parse(JSON.stringify(allData));
 
-// ============================================
-// PREVIEW MANAGER (STEP 2)
-// ============================================
-const PreviewManager = {
-  render() {
-    const thead = document.getElementById('previewTableHead');
-    const tbody = document.getElementById('previewTableBody');
+            Utils.setStatus(
+              "success",
+              `✅ ${allData.length} filas cargadas desde ${State.files.length} archivo(s)`,
+              "✅"
+            );
 
-    // Stats
-    document.getElementById('totalRows').textContent = State.data.length;
-    document.getElementById('totalColumns').textContent = State.columns.length;
-    document.getElementById('totalFiles').textContent = State.files.length;
+            PreviewManager.render();
+            Navigation.goToStep(2);
+          } catch (error) {
+            Utils.setStatus(
+              "error",
+              `❌ Error al cargar archivos: ${error.message}`,
+              "❌"
+            );
+            console.error(error);
+          }
+        },
+      };
 
-    // Headers
-    const headers = State.columns.filter(col => !col.startsWith('_'));
-    thead.innerHTML = `<tr>${headers.map(col => `<th>${col}</th>`).join('')}</tr>`;
+      // ============================================
+      // PREVIEW MANAGER (STEP 2)
+      // ============================================
+      const PreviewManager = {
+        render() {
+          const thead = document.getElementById("previewTableHead");
+          const tbody = document.getElementById("previewTableBody");
 
-    // Body (primeras 200 filas)
-    const displayData = State.data.slice(0, 200);
-    tbody.innerHTML = displayData.map(row => `
+          // Stats
+          document.getElementById("totalRows").textContent = State.data.length;
+          document.getElementById("totalColumns").textContent =
+            State.columns.length;
+          document.getElementById("totalFiles").textContent =
+            State.files.length;
+
+          // Headers
+          const headers = State.columns.filter((col) => !col.startsWith("_"));
+          thead.innerHTML = `<tr>${headers
+            .map((col) => `<th>${col}</th>`)
+            .join("")}</tr>`;
+
+          // Body (primeras 200 filas)
+          const displayData = State.data.slice(0, 200);
+          tbody.innerHTML = displayData
+            .map(
+              (row) => `
       <tr>
-        ${headers.map(col => `<td>${row[col] || ''}</td>`).join('')}
+        ${headers.map((col) => `<td>${row[col] || ""}</td>`).join("")}
       </tr>
-    `).join('');
-  }
-};
+    `
+            )
+            .join("");
+        },
+      };
 
-// ============================================
-// UNIFIED MANAGER (STEP 3 - FILTROS + EDITOR)
-// ============================================
-const UnifiedManager = {
-  previewMode: false,
+      // ============================================
+      // UNIFIED MANAGER (STEP 3 - FILTROS + EDITOR)
+      // ============================================
+      const UnifiedManager = {
+        previewMode: false,
 
-  init() {
-    this.initFilters();
-    this.initEditor();
-    this.render();
-  },
+        init() {
+          this.initFilters();
+          this.initEditor();
+          this.render();
+        },
 
+        // FILTROS
+        initFilters() {
+          const addBtn = document.getElementById("addFilterBtn");
+          const clearBtn = document.getElementById("clearFiltersBtn");
+          const orBtn = document.getElementById("orFilterBtn");
+          const andBtn = document.getElementById("andFilterBtn");
 
-  // FILTROS
-  initFilters() {
-    const addBtn = document.getElementById('addFilterBtn');
-    const clearBtn = document.getElementById('clearFiltersBtn');
-    const orBtn = document.getElementById('orFilterBtn');
-    const andBtn = document.getElementById('andFilterBtn');
+          // Remover listeners previos
+          const newAddBtn = addBtn.cloneNode(true);
+          addBtn.parentNode.replaceChild(newAddBtn, addBtn);
 
-    // Remover listeners previos
-    const newAddBtn = addBtn.cloneNode(true);
-    addBtn.parentNode.replaceChild(newAddBtn, addBtn);
+          document
+            .getElementById("addFilterBtn")
+            .addEventListener("click", () => this.addFilter());
+          clearBtn.addEventListener("click", () => this.clearFilters());
+          orBtn.addEventListener("click", () => this.setFilterLogic("or"));
+          andBtn.addEventListener("click", () => this.setFilterLogic("and"));
+        },
 
-    document.getElementById('addFilterBtn').addEventListener('click', () => this.addFilter());
-    clearBtn.addEventListener('click', () => this.clearFilters());
-    orBtn.addEventListener('click', () => this.setFilterLogic('or'));
-    andBtn.addEventListener('click', () => this.setFilterLogic('and'));
-  },
+        addFilter() {
+          const filterId = Date.now();
+          const filter = {
+            id: filterId,
+            column: State.columns[0],
+            operator: "contains",
+            value: "",
+          };
 
-  addFilter() {
-    const filterId = Date.now();
-    const filter = {
-      id: filterId,
-      column: State.columns[0],
-      operator: 'contains',
-      value: ''
-    };
+          State.filters.push(filter);
+          this.renderFilters();
+        },
 
-    State.filters.push(filter);
-    this.renderFilters();
-  },
+        removeFilter(id) {
+          State.filters = State.filters.filter((f) => f.id !== id);
+          this.renderFilters();
+          this.applyFilters();
+        },
 
-  removeFilter(id) {
-    State.filters = State.filters.filter(f => f.id !== id);
-    this.renderFilters();
-    this.applyFilters();
-  },
+        updateFilter(id, field, value) {
+          const filter = State.filters.find((f) => f.id === id);
+          if (filter) {
+            filter[field] = value;
+            this.applyFilters();
+          }
+        },
 
-  updateFilter(id, field, value) {
-    const filter = State.filters.find(f => f.id === id);
-    if (filter) {
-      filter[field] = value;
-      this.applyFilters();
-    }
-  },
+        renderFilters() {
+          const container = document.getElementById("filtersContainer");
+          const columns = State.columns.filter((col) => !col.startsWith("_"));
 
-  renderFilters() {
-    const container = document.getElementById('filtersContainer');
-    const columns = State.columns.filter(col => !col.startsWith('_'));
+          if (State.filters.length === 0) {
+            container.innerHTML =
+              '<p style="color:var(--muted);font-size:13px;">No hay filtros activos. Haz clic en "Añadir Filtro" para comenzar.</p>';
+            return;
+          }
 
-    if (State.filters.length === 0) {
-      container.innerHTML = '<p style="color:var(--muted);font-size:13px;">No hay filtros activos. Haz clic en "Añadir Filtro" para comenzar.</p>';
-      return;
-    }
-
-    container.innerHTML = State.filters.map(filter => `
+          container.innerHTML = State.filters
+            .map(
+              (filter) => `
       <div class="grid grid-4" style="margin-bottom:12px;align-items:end;">
         <div class="form-group" style="margin:0;">
           <label class="form-label" style="font-size:12px;">Campo</label>
-          <select class="form-select" data-filter-id="${filter.id}" data-field="column">
-            ${columns.map(col => `<option value="${col}" ${filter.column === col ? 'selected' : ''}>${col}</option>`).join('')}
+          <select class="form-select" data-filter-id="${
+            filter.id
+          }" data-field="column">
+            ${columns
+              .map(
+                (col) =>
+                  `<option value="${col}" ${
+                    filter.column === col ? "selected" : ""
+                  }>${col}</option>`
+              )
+              .join("")}
           </select>
         </div>
         <div class="form-group" style="margin:0;">
           <label class="form-label" style="font-size:12px;">Operador</label>
-          <select class="form-select" data-filter-id="${filter.id}" data-field="operator">
-            <option value="contains" ${filter.operator === 'contains' ? 'selected' : ''}>Contiene</option>
-            <option value="notContains" ${filter.operator === 'notContains' ? 'selected' : ''}>No contiene</option>
-            <option value="equals" ${filter.operator === 'equals' ? 'selected' : ''}>Igual a</option>
-            <option value="notEquals" ${filter.operator === 'notEquals' ? 'selected' : ''}>Diferente de</option>
-            <option value="startsWith" ${filter.operator === 'startsWith' ? 'selected' : ''}>Empieza con</option>
-            <option value="endsWith" ${filter.operator === 'endsWith' ? 'selected' : ''}>Termina con</option>
-            <option value="empty" ${filter.operator === 'empty' ? 'selected' : ''}>Está vacío</option>
-            <option value="notEmpty" ${filter.operator === 'notEmpty' ? 'selected' : ''}>No está vacío</option>
+          <select class="form-select" data-filter-id="${
+            filter.id
+          }" data-field="operator">
+            <option value="contains" ${
+              filter.operator === "contains" ? "selected" : ""
+            }>Contiene</option>
+            <option value="notContains" ${
+              filter.operator === "notContains" ? "selected" : ""
+            }>No contiene</option>
+            <option value="equals" ${
+              filter.operator === "equals" ? "selected" : ""
+            }>Igual a</option>
+            <option value="notEquals" ${
+              filter.operator === "notEquals" ? "selected" : ""
+            }>Diferente de</option>
+            <option value="startsWith" ${
+              filter.operator === "startsWith" ? "selected" : ""
+            }>Empieza con</option>
+            <option value="endsWith" ${
+              filter.operator === "endsWith" ? "selected" : ""
+            }>Termina con</option>
+            <option value="empty" ${
+              filter.operator === "empty" ? "selected" : ""
+            }>Está vacío</option>
+            <option value="notEmpty" ${
+              filter.operator === "notEmpty" ? "selected" : ""
+            }>No está vacío</option>
           </select>
         </div>
         <div class="form-group" style="margin:0;">
           <label class="form-label" style="font-size:12px;">Valor</label>
-          <input type="text" class="form-input" data-filter-id="${filter.id}" data-field="value" 
+          <input type="text" class="form-input" data-filter-id="${
+            filter.id
+          }" data-field="value" 
                  value="${filter.value}" placeholder="Valor a filtrar"
-                 ${['empty', 'notEmpty'].includes(filter.operator) ? 'disabled' : ''}>
+                 ${
+                   ["empty", "notEmpty"].includes(filter.operator)
+                     ? "disabled"
+                     : ""
+                 }>
         </div>
-        <button class="btn btn-danger" data-remove-filter="${filter.id}" style="height:38px;">🗑️</button>
+        <button class="btn btn-danger" data-remove-filter="${
+          filter.id
+        }" style="height:38px;">🗑️</button>
       </div>
-    `).join('');
+    `
+            )
+            .join("");
 
-    // Event listeners
-    container.querySelectorAll('select, input').forEach(el => {
-      el.addEventListener('change', (e) => {
-        const id = parseInt(e.target.getAttribute('data-filter-id'));
-        const field = e.target.getAttribute('data-field');
-        this.updateFilter(id, field, e.target.value);
-      });
+          // Event listeners
+          container.querySelectorAll("select, input").forEach((el) => {
+            el.addEventListener("change", (e) => {
+              const id = parseInt(e.target.getAttribute("data-filter-id"));
+              const field = e.target.getAttribute("data-field");
+              this.updateFilter(id, field, e.target.value);
+            });
 
-      el.addEventListener('input', (e) => {
-        const id = parseInt(e.target.getAttribute('data-filter-id'));
-        const field = e.target.getAttribute('data-field');
-        this.updateFilter(id, field, e.target.value);
-      });
-    });
+            el.addEventListener("input", (e) => {
+              const id = parseInt(e.target.getAttribute("data-filter-id"));
+              const field = e.target.getAttribute("data-field");
+              this.updateFilter(id, field, e.target.value);
+            });
+          });
 
-    container.querySelectorAll('[data-remove-filter]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const id = parseInt(e.target.closest('button').getAttribute('data-remove-filter'));
-        this.removeFilter(id);
-      });
-    });
-  },
+          container.querySelectorAll("[data-remove-filter]").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+              const id = parseInt(
+                e.target.closest("button").getAttribute("data-remove-filter")
+              );
+              this.removeFilter(id);
+            });
+          });
+        },
 
-  applyFilters() {
-    const filteredData = Utils.applyFilters(State.data, State.filters);
-    this.renderTable(filteredData);
-    this.updateFilterStats(filteredData);
-    this.updateEditorStats();
-  },
+        applyFilters() {
+          const filteredData = Utils.applyFilters(State.data, State.filters);
+          this.renderTable(filteredData);
+          this.updateFilterStats(filteredData);
+          this.updateEditorStats();
+        },
 
-  clearFilters() {
-    State.filters = [];
-    this.renderFilters();
-    this.applyFilters();
-  },
+        clearFilters() {
+          State.filters = [];
+          this.renderFilters();
+          this.applyFilters();
+        },
 
-  setFilterLogic(mode) {
-    if (State.filterLogic === mode) return;
+        setFilterLogic(mode) {
+          if (State.filterLogic === mode) return;
 
-    State.filterLogic = mode;
+          State.filterLogic = mode;
 
-    const orBtn = document.getElementById('orFilterBtn');
-    const andBtn = document.getElementById('andFilterBtn');
+          const orBtn = document.getElementById("orFilterBtn");
+          const andBtn = document.getElementById("andFilterBtn");
 
-    if (mode === 'or') {
-      orBtn.classList.remove('btn-ghost');
-      orBtn.classList.add('btn-primary');
-      andBtn.classList.remove('btn-primary', 'btn-success');
-      andBtn.classList.add('btn-ghost');
-    } else {
-      andBtn.classList.remove('btn-ghost');
-      andBtn.classList.add('btn-success');
-      orBtn.classList.remove('btn-primary');
-      orBtn.classList.add('btn-ghost');
-    }
+          if (mode === "or") {
+            orBtn.classList.remove("btn-ghost");
+            orBtn.classList.add("btn-primary");
+            andBtn.classList.remove("btn-primary", "btn-success");
+            andBtn.classList.add("btn-ghost");
+          } else {
+            andBtn.classList.remove("btn-ghost");
+            andBtn.classList.add("btn-success");
+            orBtn.classList.remove("btn-primary");
+            orBtn.classList.add("btn-ghost");
+          }
 
-    this.applyFilters();
+          this.applyFilters();
 
-    const modeText = mode === 'or' ? 'OR (cualquier filtro coincide)' : 'AND (todos los filtros deben coincidir)';
-    Utils.setStatus('info', `Modo de filtros: ${modeText}`, '🔄');
-  },
+          const modeText =
+            mode === "or"
+              ? "OR (cualquier filtro coincide)"
+              : "AND (todos los filtros deben coincidir)";
+          Utils.setStatus("info", `Modo de filtros: ${modeText}`, "🔄");
+        },
 
-  updateFilterStats(filteredData) {
-    const visible = filteredData.length;
-    const total = State.data.length;
-    const filtered = total - visible;
-    const percentage = total > 0 ? ((visible / total) * 100).toFixed(1) : 0;
+        updateFilterStats(filteredData) {
+          const visible = filteredData.length;
+          const total = State.data.length;
+          const filtered = total - visible;
+          const percentage =
+            total > 0 ? ((visible / total) * 100).toFixed(1) : 0;
 
-    document.getElementById('visibleRows').textContent = visible;
-    document.getElementById('filteredRows').textContent = filtered;
-    document.getElementById('filterPercentage').textContent = `${percentage}%`;
-  },
+          document.getElementById("visibleRows").textContent = visible;
+          document.getElementById("filteredRows").textContent = filtered;
+          document.getElementById(
+            "filterPercentage"
+          ).textContent = `${percentage}%`;
+        },
 
-// EDITOR
-initEditor() {
-  const modifyType = document.getElementById('modifyType');
-  const previewBtn = document.getElementById('previewChangesBtn');
-  const applyBtn = document.getElementById('applyChangesBtn');
-  const undoBtn = document.getElementById('undoChangesBtn');
+        // EDITOR
+        initEditor() {
+          const modifyType = document.getElementById("modifyType");
+          const previewBtn = document.getElementById("previewChangesBtn");
+          const applyBtn = document.getElementById("applyChangesBtn");
+          const undoBtn = document.getElementById("undoChangesBtn");
 
-  // Poblar selector de campos
-  const fieldSelect = document.getElementById('fieldToEdit');
-  const columns = State.columns.filter(col => !col.startsWith('_'));
-  fieldSelect.innerHTML = columns.map(col => `<option value="${col}">${col}</option>`).join('');
+          // Poblar selector de campos
+          const fieldSelect = document.getElementById("fieldToEdit");
+          const columns = State.columns.filter((col) => !col.startsWith("_"));
+          fieldSelect.innerHTML = columns
+            .map((col) => `<option value="${col}">${col}</option>`)
+            .join("");
 
-  modifyType.addEventListener('change', () => {
-    const isFindReplace = modifyType.value === 'findReplace';
-    document.getElementById('findReplaceGroup').classList.toggle('hidden', !isFindReplace);
-    document.getElementById('newValueGroup').classList.toggle('hidden', isFindReplace || modifyType.value === 'clear');
-  });
+          modifyType.addEventListener("change", () => {
+            const isFindReplace = modifyType.value === "findReplace";
+            document
+              .getElementById("findReplaceGroup")
+              .classList.toggle("hidden", !isFindReplace);
+            document
+              .getElementById("newValueGroup")
+              .classList.toggle(
+                "hidden",
+                isFindReplace || modifyType.value === "clear"
+              );
+          });
 
-  previewBtn.addEventListener('click', () => this.togglePreview());
-  applyBtn.addEventListener('click', () => this.applyChanges());
-  undoBtn.addEventListener('click', () => this.undoChanges());
-},
+          previewBtn.addEventListener("click", () => this.togglePreview());
+          applyBtn.addEventListener("click", () => this.applyChanges());
+          undoBtn.addEventListener("click", () => this.undoChanges());
+        },
 
-togglePreview() {
-  if (this.previewMode) {
-    // Si ya está en modo preview, cancelar y volver
-    this.cancelPreview();
-  } else {
-    // Si no está en preview, mostrar preview
-    this.previewChanges();
-  }
-},
+        togglePreview() {
+          if (this.previewMode) {
+            // Si ya está en modo preview, cancelar y volver
+            this.cancelPreview();
+          } else {
+            // Si no está en preview, mostrar preview
+            this.previewChanges();
+          }
+        },
 
-previewChanges() {
-  const field = document.getElementById('fieldToEdit').value;
-  const modifyType = document.getElementById('modifyType').value;
-  const newValue = document.getElementById('newValue').value;
-  const findText = document.getElementById('findText').value;
-  const replaceText = document.getElementById('replaceText').value;
+        previewChanges() {
+          const field = document.getElementById("fieldToEdit").value;
+          const modifyType = document.getElementById("modifyType").value;
+          const newValue = document.getElementById("newValue").value;
+          const findText = document.getElementById("findText").value;
+          const replaceText = document.getElementById("replaceText").value;
 
-  const filteredData = Utils.applyFilters(State.data, State.filters);
-  let affectedCount = 0;
+          const filteredData = Utils.applyFilters(State.data, State.filters);
+          let affectedCount = 0;
 
-  filteredData.forEach(row => {
-    const currentValue = String(row[field] || '');
-    let newVal = currentValue;
+          filteredData.forEach((row) => {
+            const currentValue = String(row[field] || "");
+            let newVal = currentValue;
 
-    switch (modifyType) {
-      case 'replace':
-        newVal = newValue;
-        break;
-      case 'append':
-        newVal = currentValue + newValue;
-        break;
-      case 'prepend':
-        newVal = newValue + currentValue;
-        break;
-      case 'clear':
-        newVal = '';
-        break;
-      case 'findReplace':
-        newVal = currentValue.replace(new RegExp(findText, 'g'), replaceText);
-        break;
-    }
+            switch (modifyType) {
+              case "replace":
+                newVal = newValue;
+                break;
+              case "append":
+                newVal = currentValue + newValue;
+                break;
+              case "prepend":
+                newVal = newValue + currentValue;
+                break;
+              case "clear":
+                newVal = "";
+                break;
+              case "findReplace":
+                newVal = currentValue.replace(
+                  new RegExp(findText, "g"),
+                  replaceText
+                );
+                break;
+            }
 
-    if (newVal !== currentValue) {
-      row[`_preview_${field}`] = newVal;
-      affectedCount++;
-    } else {
-      delete row[`_preview_${field}`];
-    }
-  });
+            if (newVal !== currentValue) {
+              row[`_preview_${field}`] = newVal;
+              affectedCount++;
+            } else {
+              delete row[`_preview_${field}`];
+            }
+          });
 
-  this.previewMode = true;
-  this.renderTable(filteredData);
-  
-  // Actualizar botón a modo "Atrás"
-  const previewBtn = document.getElementById('previewChangesBtn');
-  previewBtn.innerHTML = '← Atrás';
-  previewBtn.classList.remove('btn-warning');
-  previewBtn.classList.add('btn-ghost');
-  
-  document.getElementById('changesPill').textContent = `${affectedCount} fila${affectedCount !== 1 ? 's' : ''} será${affectedCount !== 1 ? 'n' : ''} modificada${affectedCount !== 1 ? 's' : ''}`;
-  document.getElementById('applyChangesBtn').disabled = affectedCount === 0;
-  
-  Utils.setStatus('warning', `Vista previa: ${affectedCount} filas serán modificadas`, '👁️');
-},
+          this.previewMode = true;
+          this.renderTable(filteredData);
 
-cancelPreview() {
-  const field = document.getElementById('fieldToEdit').value;
-  
-  // Limpiar todas las previsualizaciones
-  State.data.forEach(row => {
-    State.columns.forEach(col => {
-      delete row[`_preview_${col}`];
-    });
-  });
+          // Actualizar botón a modo "Atrás"
+          const previewBtn = document.getElementById("previewChangesBtn");
+          previewBtn.innerHTML = "← Atrás";
+          previewBtn.classList.remove("btn-warning");
+          previewBtn.classList.add("btn-ghost");
 
-  this.previewMode = false;
-  const filteredData = Utils.applyFilters(State.data, State.filters);
-  this.renderTable(filteredData);
-  
-  // Restaurar botón a modo "Previsualizar"
-  const previewBtn = document.getElementById('previewChangesBtn');
-  previewBtn.innerHTML = '👁️ Previsualizar Cambios';
-  previewBtn.classList.remove('btn-ghost');
-  previewBtn.classList.add('btn-warning');
-  
-  document.getElementById('changesPill').textContent = '0 filas serán modificadas';
-  document.getElementById('applyChangesBtn').disabled = true;
-  
-  Utils.setStatus('info', 'Vista previa cancelada', 'ℹ️');
-},
+          document.getElementById(
+            "changesPill"
+          ).textContent = `${affectedCount} fila${
+            affectedCount !== 1 ? "s" : ""
+          } será${affectedCount !== 1 ? "n" : ""} modificada${
+            affectedCount !== 1 ? "s" : ""
+          }`;
+          document.getElementById("applyChangesBtn").disabled =
+            affectedCount === 0;
 
-applyChanges() {
-  const field = document.getElementById('fieldToEdit').value;
-  
-  State.data.forEach(row => {
-    if (row[`_preview_${field}`] !== undefined) {
-      row[field] = row[`_preview_${field}`];
-      row._modified = true;
-      State.modifiedRowIndices.add(row._rowId);
-      delete row[`_preview_${field}`];
-    }
-  });
+          Utils.setStatus(
+            "warning",
+            `Vista previa: ${affectedCount} filas serán modificadas`,
+            "👁️"
+          );
+        },
 
-  this.previewMode = false;
-  const filteredData = Utils.applyFilters(State.data, State.filters);
-  this.renderTable(filteredData);
-  this.updateEditorStats();
+        cancelPreview() {
+          const field = document.getElementById("fieldToEdit").value;
 
-  // Restaurar botón a modo "Previsualizar"
-  const previewBtn = document.getElementById('previewChangesBtn');
-  previewBtn.innerHTML = '👁️ Previsualizar Cambios';
-  previewBtn.classList.remove('btn-ghost');
-  previewBtn.classList.add('btn-warning');
+          // Limpiar todas las previsualizaciones
+          State.data.forEach((row) => {
+            State.columns.forEach((col) => {
+              delete row[`_preview_${col}`];
+            });
+          });
 
-  document.getElementById('applyChangesBtn').disabled = true;
-  document.getElementById('undoChangesBtn').disabled = false;
-  document.getElementById('changesPill').textContent = '0 filas serán modificadas';
+          this.previewMode = false;
+          const filteredData = Utils.applyFilters(State.data, State.filters);
+          this.renderTable(filteredData);
 
-  Utils.setStatus('success', '✅ Cambios aplicados correctamente', '✅');
-},
+          // Restaurar botón a modo "Previsualizar"
+          const previewBtn = document.getElementById("previewChangesBtn");
+          previewBtn.innerHTML = "👁️ Previsualizar Cambios";
+          previewBtn.classList.remove("btn-ghost");
+          previewBtn.classList.add("btn-warning");
 
-undoChanges() {
-  State.data = JSON.parse(JSON.stringify(State.originalData));
-  State.modifiedRowIndices.clear();
-  
-  this.previewMode = false;
-  const filteredData = Utils.applyFilters(State.data, State.filters);
-  this.renderTable(filteredData);
-  this.updateEditorStats();
+          document.getElementById("changesPill").textContent =
+            "0 filas serán modificadas";
+          document.getElementById("applyChangesBtn").disabled = true;
 
-  // Restaurar botón a modo "Previsualizar"
-  const previewBtn = document.getElementById('previewChangesBtn');
-  previewBtn.innerHTML = '👁️ Previsualizar Cambios';
-  previewBtn.classList.remove('btn-ghost');
-  previewBtn.classList.add('btn-warning');
+          Utils.setStatus("info", "Vista previa cancelada", "ℹ️");
+        },
 
-  document.getElementById('undoChangesBtn').disabled = true;
-  Utils.setStatus('info', 'Cambios deshechos. Datos restaurados al estado original', '↩️');
-},
+        applyChanges() {
+          const field = document.getElementById("fieldToEdit").value;
 
-updateEditorStats() {
-  const filteredData = Utils.applyFilters(State.data, State.filters);
-  document.getElementById('modifiedRows').textContent = State.modifiedRowIndices.size;
-  document.getElementById('affectedRows').textContent = filteredData.length;
-},
+          State.data.forEach((row) => {
+            if (row[`_preview_${field}`] !== undefined) {
+              row[field] = row[`_preview_${field}`];
+              row._modified = true;
+              State.modifiedRowIndices.add(row._rowId);
+              delete row[`_preview_${field}`];
+            }
+          });
 
-// TABLA UNIFICADA
-render() {
-  this.renderFilters();
-  this.applyFilters();
-},
+          this.previewMode = false;
+          const filteredData = Utils.applyFilters(State.data, State.filters);
+          this.renderTable(filteredData);
+          this.updateEditorStats();
 
-renderTable(data) {
-  const thead = document.getElementById('unifiedTableHead');
-  const tbody = document.getElementById('unifiedTableBody');
-  const headers = State.columns.filter(col => !col.startsWith('_'));
+          // Restaurar botón a modo "Previsualizar"
+          const previewBtn = document.getElementById("previewChangesBtn");
+          previewBtn.innerHTML = "👁️ Previsualizar Cambios";
+          previewBtn.classList.remove("btn-ghost");
+          previewBtn.classList.add("btn-warning");
 
-  thead.innerHTML = `<tr>${headers.map(col => `<th>${col}</th>`).join('')}</tr>`;
-  
-  const displayData = data.slice(0, 500);
-  tbody.innerHTML = displayData.map(row => {
-    const cells = headers.map(col => {
-      const previewKey = `_preview_${col}`;
-      const hasPreview = row[previewKey] !== undefined;
-      const value = hasPreview ? row[previewKey] : (row[col] || '');
-      const originalValue = row[col] || '';
-      
-      return hasPreview 
-        ? `<td style="background:rgba(251,191,36,0.2);"><del style="color:var(--muted);">${originalValue}</del> → <strong>${value}</strong></td>`
-        : `<td>${value}</td>`;
-    }).join('');
+          document.getElementById("applyChangesBtn").disabled = true;
+          document.getElementById("undoChangesBtn").disabled = false;
+          document.getElementById("changesPill").textContent =
+            "0 filas serán modificadas";
 
-    return `<tr class="${row._modified ? 'modified' : ''}">${cells}</tr>`;
-  }).join('');
-}
-};
+          Utils.setStatus(
+            "success",
+            "✅ Cambios aplicados correctamente",
+            "✅"
+          );
+        },
 
-// ============================================
-// EXPORT MANAGER (STEP 4 - ANTIGUO STEP 5)
-// ============================================
-const ExportManager = {
-  init() {
-    this.render();
-    this.setupEvents();
-  },
+        undoChanges() {
+          State.data = JSON.parse(JSON.stringify(State.originalData));
+          State.modifiedRowIndices.clear();
 
-  setupEvents() {
-    document.getElementById('exportDataBtn').addEventListener('click', () => this.exportData());
-    document.getElementById('resetAllBtn').addEventListener('click', () => this.resetAll());
-    
-    document.getElementById('exportScope').addEventListener('change', () => this.updatePreview());
-  },
+          this.previewMode = false;
+          const filteredData = Utils.applyFilters(State.data, State.filters);
+          this.renderTable(filteredData);
+          this.updateEditorStats();
 
-  render() {
-    this.updateStats();
-    this.updatePreview();
-  },
+          // Restaurar botón a modo "Previsualizar"
+          const previewBtn = document.getElementById("previewChangesBtn");
+          previewBtn.innerHTML = "👁️ Previsualizar Cambios";
+          previewBtn.classList.remove("btn-ghost");
+          previewBtn.classList.add("btn-warning");
 
-  updateStats() {
-    const filteredData = Utils.applyFilters(State.data, State.filters);
-    document.getElementById('exportTotalRows').textContent = State.data.length;
-    document.getElementById('exportModifiedRows').textContent = State.modifiedRowIndices.size;
-    document.getElementById('exportVisibleRows').textContent = filteredData.length;
-  },
+          document.getElementById("undoChangesBtn").disabled = true;
+          Utils.setStatus(
+            "info",
+            "Cambios deshechos. Datos restaurados al estado original",
+            "↩️"
+          );
+        },
 
-  updatePreview() {
-    const scope = document.getElementById('exportScope').value;
-    let dataToShow;
+        updateEditorStats() {
+          const filteredData = Utils.applyFilters(State.data, State.filters);
+          document.getElementById("modifiedRows").textContent =
+            State.modifiedRowIndices.size;
+          document.getElementById("affectedRows").textContent =
+            filteredData.length;
+        },
 
-    switch (scope) {
-      case 'visible':
-        dataToShow = Utils.applyFilters(State.data, State.filters);
-        break;
-      case 'modified':
-        dataToShow = State.data.filter(row => row._modified);
-        break;
-      default:
-        dataToShow = State.data;
-    }
+        // TABLA UNIFICADA
+        render() {
+          this.renderFilters();
+          this.applyFilters();
+        },
 
-    this.renderTable(dataToShow);
-  },
+        renderTable(data) {
+          const thead = document.getElementById("unifiedTableHead");
+          const tbody = document.getElementById("unifiedTableBody");
+          const headers = State.columns.filter((col) => !col.startsWith("_"));
 
-  renderTable(data) {
-    const thead = document.getElementById('exportTableHead');
-    const tbody = document.getElementById('exportTableBody');
-    const headers = State.columns.filter(col => !col.startsWith('_'));
+          thead.innerHTML = `<tr>${headers
+            .map((col) => `<th>${col}</th>`)
+            .join("")}</tr>`;
 
-    thead.innerHTML = `<tr>${headers.map(col => `<th>${col}</th>`).join('')}</tr>`;
-    
-    const displayData = data.slice(0, 500);
-    tbody.innerHTML = displayData.map(row => `
-      <tr class="${row._modified ? 'modified' : ''}">
-        ${headers.map(col => `<td>${row[col] || ''}</td>`).join('')}
+          const displayData = data.slice(0, 500);
+          tbody.innerHTML = displayData
+            .map((row) => {
+              const cells = headers
+                .map((col) => {
+                  const previewKey = `_preview_${col}`;
+                  const hasPreview = row[previewKey] !== undefined;
+                  const value = hasPreview ? row[previewKey] : row[col] || "";
+                  const originalValue = row[col] || "";
+
+                  return hasPreview
+                    ? `<td style="background:rgba(251,191,36,0.2);"><del style="color:var(--muted);">${originalValue}</del> → <strong>${value}</strong></td>`
+                    : `<td>${value}</td>`;
+                })
+                .join("");
+
+              return `<tr class="${
+                row._modified ? "modified" : ""
+              }">${cells}</tr>`;
+            })
+            .join("");
+        },
+      };
+
+      // ============================================
+      // EXPORT MANAGER (STEP 4 - ANTIGUO STEP 5)
+      // ============================================
+      const ExportManager = {
+        init() {
+          this.render();
+          this.setupEvents();
+        },
+
+        setupEvents() {
+          document
+            .getElementById("exportDataBtn")
+            .addEventListener("click", () => this.exportData());
+          document
+            .getElementById("resetAllBtn")
+            .addEventListener("click", () => this.resetAll());
+
+          document
+            .getElementById("exportScope")
+            .addEventListener("change", () => this.updatePreview());
+        },
+
+        render() {
+          this.updateStats();
+          this.updatePreview();
+        },
+
+        updateStats() {
+          const filteredData = Utils.applyFilters(State.data, State.filters);
+          document.getElementById("exportTotalRows").textContent =
+            State.data.length;
+          document.getElementById("exportModifiedRows").textContent =
+            State.modifiedRowIndices.size;
+          document.getElementById("exportVisibleRows").textContent =
+            filteredData.length;
+        },
+
+        updatePreview() {
+          const scope = document.getElementById("exportScope").value;
+          let dataToShow;
+
+          switch (scope) {
+            case "visible":
+              dataToShow = Utils.applyFilters(State.data, State.filters);
+              break;
+            case "modified":
+              dataToShow = State.data.filter((row) => row._modified);
+              break;
+            default:
+              dataToShow = State.data;
+          }
+
+          this.renderTable(dataToShow);
+        },
+
+        renderTable(data) {
+          const thead = document.getElementById("exportTableHead");
+          const tbody = document.getElementById("exportTableBody");
+          const headers = State.columns.filter((col) => !col.startsWith("_"));
+
+          thead.innerHTML = `<tr>${headers
+            .map((col) => `<th>${col}</th>`)
+            .join("")}</tr>`;
+
+          const displayData = data.slice(0, 500);
+          tbody.innerHTML = displayData
+            .map(
+              (row) => `
+      <tr class="${row._modified ? "modified" : ""}">
+        ${headers.map((col) => `<td>${row[col] || ""}</td>`).join("")}
       </tr>
-    `).join('');
-  },
+    `
+            )
+            .join("");
+        },
 
-  exportData() {
-    const format = document.getElementById('exportFormat').value;
-    const scope = document.getElementById('exportScope').value;
-    
-    let dataToExport;
-    switch (scope) {
-      case 'visible':
-        dataToExport = Utils.applyFilters(State.data, State.filters);
-        break;
-      case 'modified':
-        dataToExport = State.data.filter(row => row._modified);
-        break;
-      default:
-        dataToExport = State.data;
-    }
+        exportData() {
+          const format = document.getElementById("exportFormat").value;
+          const scope = document.getElementById("exportScope").value;
 
-    const columns = State.columns.filter(col => !col.startsWith('_'));
-    const timestamp = new Date().toISOString().split('T')[0];
-    const filename = `data_export_${timestamp}`;
+          let dataToExport;
+          switch (scope) {
+            case "visible":
+              dataToExport = Utils.applyFilters(State.data, State.filters);
+              break;
+            case "modified":
+              dataToExport = State.data.filter((row) => row._modified);
+              break;
+            default:
+              dataToExport = State.data;
+          }
 
-    if (format === 'csv') {
-      Utils.exportToCSV(dataToExport, State.columns, `${filename}.csv`);
-    } else {
-      Utils.exportToExcel(dataToExport, State.columns, `${filename}.xlsx`);
-    }
+          const columns = State.columns.filter((col) => !col.startsWith("_"));
+          const timestamp = new Date().toISOString().split("T")[0];
+          const filename = `data_export_${timestamp}`;
 
-    Utils.setStatus('success', `✅ ${dataToExport.length} filas exportadas correctamente`, '💾');
-  },
+          if (format === "csv") {
+            Utils.exportToCSV(dataToExport, State.columns, `${filename}.csv`);
+          } else {
+            Utils.exportToExcel(
+              dataToExport,
+              State.columns,
+              `${filename}.xlsx`
+            );
+          }
 
-  resetAll() {
-    if (confirm('¿Estás seguro de que quieres reiniciar todo? Se perderán todos los cambios no exportados.')) {
-      State.files = [];
-      State.columns = [];
-      State.data = [];
-      State.originalData = [];
-      State.filters = [];
-      State.modifications = [];
-      State.modifiedRowIndices.clear();
-      
-      document.getElementById('fileInput').value = '';
-      Navigation.goToStep(1);
-      Utils.setStatus('info', 'Aplicación reiniciada. Sube archivos para comenzar de nuevo', '🔄');
-    }
-  }
-};
+          Utils.setStatus(
+            "success",
+            `✅ ${dataToExport.length} filas exportadas correctamente`,
+            "💾"
+          );
+        },
 
-// ============================================
-// INITIALIZATION
-// ============================================
-document.addEventListener('DOMContentLoaded', () => {
-  FileLoader.init();
-  Navigation.setupNavigation();
-  
-  Utils.setStatus('info', 'Bienvenido a Data Editor Pro. Sube tus archivos CSV o Excel para comenzar', '👋');
-});
-</script>
+        resetAll() {
+          if (
+            confirm(
+              "¿Estás seguro de que quieres reiniciar todo? Se perderán todos los cambios no exportados."
+            )
+          ) {
+            State.files = [];
+            State.columns = [];
+            State.data = [];
+            State.originalData = [];
+            State.filters = [];
+            State.modifications = [];
+            State.modifiedRowIndices.clear();
 
-</body>
+            document.getElementById("fileInput").value = "";
+            Navigation.goToStep(1);
+            Utils.setStatus(
+              "info",
+              "Aplicación reiniciada. Sube archivos para comenzar de nuevo",
+              "🔄"
+            );
+          }
+        },
+      };
+
+      // ============================================
+      // INITIALIZATION
+      // ============================================
+      document.addEventListener("DOMContentLoaded", () => {
+        FileLoader.init();
+        Navigation.setupNavigation();
+
+        Utils.setStatus(
+          "info",
+          "Bienvenido a Data Editor Pro. Sube tus archivos CSV o Excel para comenzar",
+          "👋"
+        );
+      });
+    </script>
+  </body>
 </html>
