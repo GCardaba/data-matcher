@@ -229,6 +229,29 @@
         cursor: pointer;
       }
 
+      /* Indicador visual para select de valores únicos */
+      .form-select[data-field="value"] {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237cb2ff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        padding-right: 30px;
+      }
+
+      /* Indicador de que hay valores únicos disponibles */
+      .form-label .unique-indicator {
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
       /* Grid Layout */
       .grid {
         display: grid;
@@ -479,6 +502,272 @@
         font-size: 11px;
         color: var(--muted);
       }
+      /* Warning Box para columnas inconsistentes */
+      .warning-box {
+        background: linear-gradient(135deg, #78350f 0%, #1e293b 100%);
+        border: 2px solid var(--warning);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+
+      .warning-box h3 {
+        color: var(--warning);
+        font-size: 18px;
+        font-weight: 700;
+        margin: 0 0 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .warning-box p {
+        color: var(--text);
+        font-size: 14px;
+        line-height: 1.6;
+        margin: 0 0 16px;
+      }
+
+      .file-columns-list {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      .file-columns-item {
+        padding: 10px;
+        margin-bottom: 8px;
+        background: rgba(124, 178, 255, 0.05);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+      }
+
+      .file-columns-item .file-name-header {
+        font-weight: 600;
+        color: var(--accent);
+        margin-bottom: 8px;
+        font-size: 13px;
+      }
+
+      .file-columns-item .columns-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .column-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-size: 11px;
+        color: var(--text);
+      }
+
+      .column-tag.missing {
+        background: rgba(248, 113, 113, 0.2);
+        border-color: var(--error);
+        color: var(--error);
+      }
+
+      .column-tag.extra {
+        background: rgba(251, 191, 36, 0.2);
+        border-color: var(--warning);
+        color: var(--warning);
+      }
+
+      /* Change Log Panel */
+      .change-log-panel {
+        background: linear-gradient(135deg, #065f46 0%, #1e293b 100%);
+        border: 2px solid var(--success);
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 24px;
+        margin-bottom: 24px;
+      }
+
+      .change-log-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        user-select: none;
+        margin-bottom: 16px;
+      }
+
+      .change-log-header:hover {
+        opacity: 0.9;
+      }
+
+      .change-log-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--success);
+      }
+
+      .change-log-toggle {
+        font-size: 24px;
+        transition: transform 0.3s ease;
+      }
+
+      .change-log-toggle.collapsed {
+        transform: rotate(-90deg);
+      }
+
+      .change-log-content {
+        max-height: 500px;
+        overflow-y: auto;
+        transition: all 0.3s ease;
+      }
+
+      .change-log-content.collapsed {
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+      }
+
+      .change-log-empty {
+        text-align: center;
+        padding: 30px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .change-log-item {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 12px;
+        position: relative;
+      }
+
+      .change-log-item:hover {
+        background: rgba(0, 0, 0, 0.4);
+        border-color: var(--success);
+      }
+
+      .change-log-timestamp {
+        font-size: 11px;
+        color: var(--muted);
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .change-log-modification {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 10px;
+        padding: 8px 12px;
+        background: rgba(124, 178, 255, 0.1);
+        border-radius: 6px;
+        border-left: 3px solid var(--accent);
+      }
+
+      .change-log-details {
+        display: grid;
+        gap: 8px;
+        font-size: 13px;
+      }
+
+      .change-log-detail {
+        display: flex;
+        gap: 8px;
+        padding: 6px 10px;
+        background: rgba(124, 178, 255, 0.05);
+        border-radius: 4px;
+      }
+
+      .change-log-detail-label {
+        font-weight: 600;
+        color: var(--success);
+        min-width: 120px;
+      }
+
+      .change-log-detail-value {
+        color: var(--text);
+        flex: 1;
+      }
+
+      .change-log-filters {
+        margin-top: 8px;
+        padding: 10px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 6px;
+        font-size: 12px;
+      }
+
+      .change-log-filter-item {
+        padding: 4px 0;
+        color: var(--muted);
+      }
+
+      .change-log-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+      }
+
+      /* Export CSV Options Panel */
+      .export-options-panel {
+        background: rgba(124, 178, 255, 0.05);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 16px;
+        margin-bottom: 16px;
+      }
+
+      .export-options-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--accent);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .export-options-description {
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 16px;
+        line-height: 1.5;
+      }
+
+      .delimiter-preview {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px;
+        margin-top: 12px;
+        font-family: "Courier New", monospace;
+        font-size: 12px;
+        color: var(--success);
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+
+      .delimiter-preview-title {
+        font-size: 11px;
+        color: var(--muted);
+        margin-bottom: 8px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Ubuntu, sans-serif;
+      }
     </style>
   </head>
   <body>
@@ -588,6 +877,16 @@
           Revisa los datos cargados. Verifica que las columnas y filas se hayan
           importado correctamente. (Solo se ven las 200 primeras lineas)
         </p>
+        <div id="columnWarningBox" class="warning-box hidden">
+          <h3>⚠️ Advertencia: Estructura de Columnas Inconsistente</h3>
+          <p>
+            Se han detectado diferencias en las columnas de los archivos
+            importados. Los datos se han consolidado incluyendo todas las
+            columnas encontradas, pero algunos archivos pueden tener campos
+            vacíos donde no existía la columna original.
+          </p>
+          <div class="file-columns-list" id="fileColumnsList"></div>
+        </div>
 
         <div class="stats">
           <div class="stat-card">
@@ -822,6 +1121,32 @@
           </div>
         </div>
 
+        <!-- HISTORIAL DE CAMBIOS -->
+        <div class="change-log-panel">
+          <div class="change-log-header" id="changeLogHeader">
+            <div class="change-log-title">
+              📋 Historial de Modificaciones
+              <span class="pill success" id="changeLogCount">0 cambios</span>
+            </div>
+            <div>
+              <button
+                id="exportLogBtn"
+                class="btn btn-ghost"
+                style="padding: 6px 12px; font-size: 12px; margin-right: 10px"
+              >
+                📥 Exportar Log
+              </button>
+              <span class="change-log-toggle" id="changeLogToggle">🔽</span>
+            </div>
+          </div>
+          <div class="change-log-content" id="changeLogContent">
+            <div class="change-log-empty">
+              No se han realizado modificaciones aún. Los cambios aplicados se
+              registrarán aquí.
+            </div>
+          </div>
+        </div>
+
         <!-- TABLA UNIFICADA -->
         <div class="table-container" style="margin-top: 20px">
           <table class="data-table" id="unifiedTable">
@@ -838,7 +1163,7 @@
         </div>
       </section>
 
-      <!-- STEP 4: Exportar (ANTIGUO STEP 5) -->
+      <!-- STEP 4: Exportar -->
       <section id="step4" class="card hidden">
         <h2>💾 Paso 4: Exportar Resultados</h2>
         <p class="description">
@@ -880,6 +1205,51 @@
           </div>
         </div>
 
+        <!-- Panel de Opciones CSV -->
+        <div id="csvOptionsPanel" class="export-options-panel">
+          <div class="export-options-title">⚙️ Opciones de Exportación CSV</div>
+          <p class="export-options-description">
+            Configura cómo quieres exportar tu archivo CSV. Selecciona el
+            delimitador y otras opciones según tus necesidades.
+          </p>
+
+          <div class="grid grid-3">
+            <div class="form-group">
+              <label class="form-label">Delimitador</label>
+              <select id="exportCsvDelimiter" class="form-select">
+                <option value=",">Coma (,)</option>
+                <option value=";">Punto y coma (;)</option>
+                <option value="\t">Tabulador (Tab)</option>
+                <option value="|">Pipe (|)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Codificación</label>
+              <select id="exportCsvEncoding" class="form-select">
+                <option value="utf-8">UTF-8</option>
+                <option value="utf-8-bom">UTF-8 con BOM</option>
+                <option value="windows-1252">Windows-1252</option>
+                <option value="iso-8859-1">ISO-8859-1</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Entrecomillado</label>
+              <select id="exportCsvQuoting" class="form-select">
+                <option value="minimal">Mínimo (solo si necesario)</option>
+                <option value="all">Todos los campos</option>
+                <option value="none">Sin comillas</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="delimiter-preview">
+            <div class="delimiter-preview-title">Vista previa del formato:</div>
+            <div id="delimiterPreview"></div>
+          </div>
+        </div>
+
         <div class="table-container" style="margin-top: 20px">
           <table class="data-table" id="exportTable">
             <thead id="exportTableHead"></thead>
@@ -913,6 +1283,9 @@
         modifications: [],
         modifiedRowIndices: new Set(),
         currentStep: 1,
+        fileColumnsInfo: [],
+        hasColumnMismatch: false,
+        changeLog: [],
       };
 
       const Utils = {
@@ -1073,27 +1446,81 @@
         },
 
         // Exportar CSV
-        exportToCSV(data, columns, filename = "export.csv") {
-          const headers = columns.filter((col) => !col.startsWith("_"));
-          const csvContent = [
-            headers.join(","),
-            ...data.map((row) =>
-              headers
-                .map((col) => {
-                  const value = String(row[col] || "");
-                  return value.includes(",") ||
-                    value.includes('"') ||
-                    value.includes("\n")
-                    ? `"${value.replace(/"/g, '""')}"`
-                    : value;
-                })
-                .join(",")
-            ),
-          ].join("\n");
+        exportToCSV(data, columns, filename = "export.csv", options = {}) {
+          const {
+            delimiter = ",",
+            encoding = "utf-8",
+            quoting = "minimal",
+          } = options;
 
-          const blob = new Blob([csvContent], {
-            type: "text/csv;charset=utf-8;",
+          // Filtrar columnas internas (_rowId, _modified, etc.)
+          const headers = columns.filter((col) => !col.startsWith("_"));
+
+          const escapeField = (value) => {
+            // Convertir a string, manejar null/undefined/números
+            let strValue = "";
+
+            if (value === null || value === undefined) {
+              strValue = "";
+            } else if (typeof value === "number") {
+              strValue = String(value);
+            } else {
+              strValue = String(value);
+            }
+
+            // Sin entrecomillado
+            if (quoting === "none") {
+              return strValue;
+            }
+
+            // Entrecomillar todos los campos
+            if (quoting === "all") {
+              return `"${strValue.replace(/"/g, '""')}"`;
+            }
+
+            // Entrecomillado mínimo (solo si contiene caracteres especiales)
+            const needsQuotes =
+              strValue.includes(delimiter) ||
+              strValue.includes('"') ||
+              strValue.includes("\n") ||
+              strValue.includes("\r") ||
+              strValue.startsWith(" ") ||
+              strValue.endsWith(" "); // espacios al inicio/final
+
+            if (needsQuotes) {
+              return `"${strValue.replace(/"/g, '""')}"`;
+            }
+
+            return strValue;
+          };
+
+          // Construir las filas del CSV
+          const rows = [];
+
+          // Fila de encabezados
+          rows.push(headers.map((h) => escapeField(h)).join(delimiter));
+
+          // Filas de datos - IMPORTANTE: asegurar que cada fila tenga TODOS los campos
+          data.forEach((row) => {
+            const rowData = headers.map((col) => {
+              // Obtener el valor de cada columna, usar string vacío si no existe
+              const value = row.hasOwnProperty(col) ? row[col] : "";
+              return escapeField(value);
+            });
+            rows.push(rowData.join(delimiter));
           });
+
+          const csvContent = rows.join("\n");
+
+          let finalContent = csvContent;
+          let mimeType = "text/csv;charset=utf-8;";
+
+          // Añadir BOM si se seleccionó UTF-8 con BOM
+          if (encoding === "utf-8-bom") {
+            finalContent = "\ufeff" + csvContent;
+          }
+
+          const blob = new Blob([finalContent], { type: mimeType });
           const link = document.createElement("a");
           link.href = URL.createObjectURL(blob);
           link.download = filename;
@@ -1131,7 +1558,7 @@
       // ============================================
       const Navigation = {
         goToStep(step) {
-          // Ocultar todos los steps (ahora son 4)
+          // Ocultar todos los steps
           for (let i = 1; i <= 4; i++) {
             const section = document.getElementById(`step${i}`);
             const stepEl = document.querySelector(`.step[data-step="${i}"]`);
@@ -1244,8 +1671,10 @@
               parseInt(document.getElementById("headerRow").value) - 1;
 
             let allData = [];
-            let columns = [];
+            let allColumns = new Set();
+            let fileColumnsInfo = [];
 
+            // Procesar cada archivo
             for (const file of State.files) {
               const isExcel = file.name.match(/\.(xlsx|xls)$/i);
               let rawData;
@@ -1263,16 +1692,57 @@
 
               const normalized = Utils.normalizeData(rawData, headerRow);
 
-              if (columns.length === 0) {
-                columns = normalized.columns;
-              }
+              fileColumnsInfo.push({
+                fileName: file.name,
+                columns: [...normalized.columns],
+                rowCount: normalized.data.length,
+              });
+
+              // Agregar todas las columnas al set global
+              normalized.columns.forEach((col) => allColumns.add(col));
 
               allData = allData.concat(normalized.data);
             }
 
-            State.columns = columns;
+            // Convertir set a array
+            const finalColumns = Array.from(allColumns);
+
+            // Detectar si hay discrepancias en columnas
+            let hasColumnMismatch = false;
+            if (State.files.length > 1) {
+              const firstFileColumns = new Set(fileColumnsInfo[0].columns);
+              for (let i = 1; i < fileColumnsInfo.length; i++) {
+                const currentColumns = new Set(fileColumnsInfo[i].columns);
+                if (firstFileColumns.size !== currentColumns.size) {
+                  hasColumnMismatch = true;
+                  break;
+                }
+                for (let col of firstFileColumns) {
+                  if (!currentColumns.has(col)) {
+                    hasColumnMismatch = true;
+                    break;
+                  }
+                }
+                if (hasColumnMismatch) break;
+              }
+            }
+
+            // Normalizar todas las filas para que tengan todas las columnas
+            allData = allData.map((row) => {
+              const normalizedRow = { ...row };
+              finalColumns.forEach((col) => {
+                if (!(col in normalizedRow)) {
+                  normalizedRow[col] = "";
+                }
+              });
+              return normalizedRow;
+            });
+
+            State.columns = finalColumns;
             State.data = allData;
             State.originalData = JSON.parse(JSON.stringify(allData));
+            State.fileColumnsInfo = fileColumnsInfo;
+            State.hasColumnMismatch = hasColumnMismatch;
 
             Utils.setStatus(
               "success",
@@ -1308,6 +1778,9 @@
           document.getElementById("totalFiles").textContent =
             State.files.length;
 
+          // Mostrar warning si hay inconsistencias
+          this.renderColumnWarning();
+
           // Headers
           const headers = State.columns.filter((col) => !col.startsWith("_"));
           thead.innerHTML = `<tr>${headers
@@ -1326,6 +1799,76 @@
             )
             .join("");
         },
+
+        // Renderizar warning de columnas inconsistentes
+        renderColumnWarning() {
+          const warningBox = document.getElementById("columnWarningBox");
+          const fileColumnsList = document.getElementById("fileColumnsList");
+
+          if (!State.hasColumnMismatch || State.files.length <= 1) {
+            warningBox.classList.add("hidden");
+            return;
+          }
+
+          warningBox.classList.remove("hidden");
+
+          // Obtener todas las columnas únicas
+          const allColumns = new Set(
+            State.columns.filter((col) => !col.startsWith("_"))
+          );
+
+          // Generar HTML para cada archivo
+          const filesHTML = State.fileColumnsInfo
+            .map((fileInfo, index) => {
+              const fileColumns = new Set(
+                fileInfo.columns.filter((col) => !col.startsWith("_"))
+              );
+
+              // Columnas que le faltan a este archivo
+              const missingColumns = [...allColumns].filter(
+                (col) => !fileColumns.has(col)
+              );
+
+              // Columnas que tiene este archivo
+              const presentColumns = [...fileColumns];
+
+              return `
+        <div class="file-columns-item">
+          <div class="file-name-header">
+            📄 ${fileInfo.fileName} 
+            <span style="color:var(--muted);font-weight:400;font-size:11px;">
+              (${fileInfo.rowCount} filas, ${fileColumns.size} columnas)
+            </span>
+          </div>
+          <div class="columns-list">
+            ${presentColumns
+              .map((col) => `<span class="column-tag">${col}</span>`)
+              .join("")}
+            ${
+              missingColumns.length > 0
+                ? missingColumns
+                    .map(
+                      (col) =>
+                        `<span class="column-tag missing">❌ ${col}</span>`
+                    )
+                    .join("")
+                : ""
+            }
+          </div>
+        </div>
+      `;
+            })
+            .join("");
+
+          fileColumnsList.innerHTML = filesHTML;
+
+          // Actualizar status
+          Utils.setStatus(
+            "warning",
+            `⚠️ Archivos con estructuras diferentes detectados. Revisa la advertencia en el Paso 2.`,
+            "⚠️"
+          );
+        },
       };
 
       // ============================================
@@ -1337,6 +1880,7 @@
         init() {
           this.initFilters();
           this.initEditor();
+          this.initChangeLog();
           this.render();
         },
 
@@ -1378,12 +1922,24 @@
           this.applyFilters();
         },
 
-        updateFilter(id, field, value) {
-          const filter = State.filters.find((f) => f.id === id);
-          if (filter) {
-            filter[field] = value;
-            this.applyFilters();
-          }
+        // Obtener valores únicos de una columna
+        getUniqueValues(columnName) {
+          const values = new Set();
+          State.data.forEach((row) => {
+            const value = row[columnName];
+            if (value !== null && value !== undefined && value !== "") {
+              values.add(String(value).trim());
+            }
+          });
+          return Array.from(values).sort((a, b) => {
+            // Intentar ordenar numéricamente si es posible, sino alfabéticamente
+            const numA = parseFloat(a);
+            const numB = parseFloat(b);
+            if (!isNaN(numA) && !isNaN(numB)) {
+              return numA - numB;
+            }
+            return a.localeCompare(b, "es", { sensitivity: "base" });
+          });
         },
 
         renderFilters() {
@@ -1397,90 +1953,197 @@
           }
 
           container.innerHTML = State.filters
-            .map(
-              (filter) => `
-      <div class="grid grid-4" style="margin-bottom:12px;align-items:end;">
-        <div class="form-group" style="margin:0;">
-          <label class="form-label" style="font-size:12px;">Campo</label>
-          <select class="form-select" data-filter-id="${
-            filter.id
-          }" data-field="column">
-            ${columns
-              .map(
-                (col) =>
-                  `<option value="${col}" ${
-                    filter.column === col ? "selected" : ""
-                  }>${col}</option>`
-              )
-              .join("")}
-          </select>
-        </div>
-        <div class="form-group" style="margin:0;">
-          <label class="form-label" style="font-size:12px;">Operador</label>
-          <select class="form-select" data-filter-id="${
-            filter.id
-          }" data-field="operator">
-            <option value="contains" ${
-              filter.operator === "contains" ? "selected" : ""
-            }>Contiene</option>
-            <option value="notContains" ${
-              filter.operator === "notContains" ? "selected" : ""
-            }>No contiene</option>
-            <option value="equals" ${
-              filter.operator === "equals" ? "selected" : ""
-            }>Igual a</option>
-            <option value="notEquals" ${
-              filter.operator === "notEquals" ? "selected" : ""
-            }>Diferente de</option>
-            <option value="startsWith" ${
-              filter.operator === "startsWith" ? "selected" : ""
-            }>Empieza con</option>
-            <option value="endsWith" ${
-              filter.operator === "endsWith" ? "selected" : ""
-            }>Termina con</option>
-            <option value="empty" ${
-              filter.operator === "empty" ? "selected" : ""
-            }>Está vacío</option>
-            <option value="notEmpty" ${
-              filter.operator === "notEmpty" ? "selected" : ""
-            }>No está vacío</option>
-          </select>
-        </div>
-        <div class="form-group" style="margin:0;">
-          <label class="form-label" style="font-size:12px;">Valor</label>
-          <input type="text" class="form-input" data-filter-id="${
-            filter.id
-          }" data-field="value" 
-                 value="${filter.value}" placeholder="Valor a filtrar"
-                 ${
-                   ["empty", "notEmpty"].includes(filter.operator)
-                     ? "disabled"
-                     : ""
-                 }>
-        </div>
-        <button class="btn btn-danger" data-remove-filter="${
+            .map((filter) => {
+              const isEqualsOperator = filter.operator === "equals";
+              const needsValue = !["empty", "notEmpty"].includes(
+                filter.operator
+              );
+
+              // Obtener valores únicos si el operador es "equals"
+              let uniqueValues = [];
+              if (isEqualsOperator && filter.column) {
+                uniqueValues = this.getUniqueValues(filter.column);
+              }
+
+              // Generar el campo de valor (input o select según el operador)
+              let valueField = "";
+              if (needsValue) {
+                if (isEqualsOperator) {
+                  // Select con valores únicos
+                  valueField = `
+            <select class="form-select" data-filter-id="${
+              filter.id
+            }" data-field="value">
+              <option value="">-- Seleccionar valor --</option>
+              ${uniqueValues
+                .map(
+                  (val) => `
+                <option value="${val}" ${
+                    filter.value === val ? "selected" : ""
+                  }>${val}</option>
+              `
+                )
+                .join("")}
+            </select>
+          `;
+                } else {
+                  // Input de texto normal
+                  valueField = `
+            <input type="text" class="form-input" data-filter-id="${filter.id}" data-field="value" 
+                   value="${filter.value}" placeholder="Valor a filtrar">
+          `;
+                }
+              } else {
+                // Operadores que no necesitan valor (empty, notEmpty)
+                valueField = `
+          <input type="text" class="form-input" value="(no requerido)" disabled>
+        `;
+              }
+
+              return `
+        <div class="grid grid-4" style="margin-bottom:12px;align-items:end;" data-filter-container="${
           filter.id
-        }" style="height:38px;">🗑️</button>
-      </div>
-    `
-            )
+        }">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label" style="font-size:12px;">Campo</label>
+            <select class="form-select" data-filter-id="${
+              filter.id
+            }" data-field="column">
+              ${columns
+                .map(
+                  (col) =>
+                    `<option value="${col}" ${
+                      filter.column === col ? "selected" : ""
+                    }>${col}</option>`
+                )
+                .join("")}
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label" style="font-size:12px;">Operador</label>
+            <select class="form-select" data-filter-id="${
+              filter.id
+            }" data-field="operator">
+              <option value="contains" ${
+                filter.operator === "contains" ? "selected" : ""
+              }>Contiene</option>
+              <option value="notContains" ${
+                filter.operator === "notContains" ? "selected" : ""
+              }>No contiene</option>
+              <option value="equals" ${
+                filter.operator === "equals" ? "selected" : ""
+              }>Igual a</option>
+              <option value="notEquals" ${
+                filter.operator === "notEquals" ? "selected" : ""
+              }>Diferente de</option>
+              <option value="startsWith" ${
+                filter.operator === "startsWith" ? "selected" : ""
+              }>Empieza con</option>
+              <option value="endsWith" ${
+                filter.operator === "endsWith" ? "selected" : ""
+              }>Termina con</option>
+              <option value="empty" ${
+                filter.operator === "empty" ? "selected" : ""
+              }>Está vacío</option>
+              <option value="notEmpty" ${
+                filter.operator === "notEmpty" ? "selected" : ""
+              }>No está vacío</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label" style="font-size:12px;">
+              Valor
+              ${
+                isEqualsOperator
+                  ? `<span class="unique-indicator" style="color:var(--success);font-size:10px;margin-left:4px;">(${uniqueValues.length} opciones)</span>`
+                  : ""
+              }
+            </label>
+            ${valueField}
+          </div>
+          <button class="btn btn-danger" data-remove-filter="${
+            filter.id
+          }" style="height:38px;">🗑️</button>
+        </div>
+      `;
+            })
             .join("");
 
           // Event listeners
-          container.querySelectorAll("select, input").forEach((el) => {
-            el.addEventListener("change", (e) => {
-              const id = parseInt(e.target.getAttribute("data-filter-id"));
-              const field = e.target.getAttribute("data-field");
-              this.updateFilter(id, field, e.target.value);
+          this.attachFilterEvents();
+        },
+
+        attachFilterEvents() {
+          const container = document.getElementById("filtersContainer");
+
+          // Listeners para cambios en columna
+          container
+            .querySelectorAll('select[data-field="column"]')
+            .forEach((el) => {
+              el.addEventListener("change", (e) => {
+                const id = parseInt(e.target.getAttribute("data-filter-id"));
+                const filter = State.filters.find((f) => f.id === id);
+
+                if (filter) {
+                  filter.column = e.target.value;
+
+                  // Si el operador es "equals", re-renderizar para actualizar las opciones
+                  if (filter.operator === "equals") {
+                    filter.value = ""; // Resetear el valor cuando cambia la columna
+                    this.renderFilters();
+                  } else {
+                    this.applyFilters();
+                  }
+                }
+              });
             });
 
-            el.addEventListener("input", (e) => {
-              const id = parseInt(e.target.getAttribute("data-filter-id"));
-              const field = e.target.getAttribute("data-field");
-              this.updateFilter(id, field, e.target.value);
-            });
-          });
+          // Listeners para cambios en operador
+          container
+            .querySelectorAll('select[data-field="operator"]')
+            .forEach((el) => {
+              el.addEventListener("change", (e) => {
+                const id = parseInt(e.target.getAttribute("data-filter-id"));
+                const filter = State.filters.find((f) => f.id === id);
 
+                if (filter) {
+                  const oldOperator = filter.operator;
+                  const newOperator = e.target.value;
+                  filter.operator = newOperator;
+
+                  // Si cambia de/a "equals", re-renderizar para cambiar input/select
+                  if (oldOperator === "equals" || newOperator === "equals") {
+                    if (newOperator === "equals") {
+                      filter.value = ""; // Resetear valor al cambiar a equals
+                    }
+                    this.renderFilters();
+                  } else {
+                    this.applyFilters();
+                  }
+                }
+              });
+            });
+
+          // Listeners para cambios en valor (tanto input como select)
+          container
+            .querySelectorAll(
+              'input[data-field="value"], select[data-field="value"]'
+            )
+            .forEach((el) => {
+              const eventType = el.tagName === "SELECT" ? "change" : "input";
+
+              el.addEventListener(eventType, (e) => {
+                const id = parseInt(e.target.getAttribute("data-filter-id"));
+                const filter = State.filters.find((f) => f.id === id);
+
+                if (filter) {
+                  filter.value = e.target.value;
+                  this.applyFilters();
+                }
+              });
+            });
+
+          // Listeners para botones de eliminar
           container.querySelectorAll("[data-remove-filter]").forEach((btn) => {
             btn.addEventListener("click", (e) => {
               const id = parseInt(
@@ -1579,12 +2242,276 @@
           undoBtn.addEventListener("click", () => this.undoChanges());
         },
 
+        // CHANGE LOG
+        initChangeLog() {
+          const header = document.getElementById("changeLogHeader");
+          const toggle = document.getElementById("changeLogToggle");
+          const content = document.getElementById("changeLogContent");
+          const exportBtn = document.getElementById("exportLogBtn");
+
+          // Toggle panel
+          header.addEventListener("click", (e) => {
+            // No colapsar si se hace click en el botón de exportar
+            if (e.target.closest("#exportLogBtn")) return;
+
+            content.classList.toggle("collapsed");
+            toggle.classList.toggle("collapsed");
+          });
+
+          // Exportar log
+          exportBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            this.exportChangeLog();
+          });
+
+          this.renderChangeLog();
+        },
+
+        addToChangeLog(modification) {
+          const timestamp = new Date();
+          const logEntry = {
+            timestamp: timestamp,
+            modification: modification,
+            filters: JSON.parse(JSON.stringify(State.filters)),
+            filterLogic: State.filterLogic,
+            affectedRows: modification.affectedRows,
+          };
+
+          State.changeLog.push(logEntry);
+          this.renderChangeLog();
+        },
+
+        renderChangeLog() {
+          const content = document.getElementById("changeLogContent");
+          const countPill = document.getElementById("changeLogCount");
+
+          countPill.textContent = `${State.changeLog.length} cambio${
+            State.changeLog.length !== 1 ? "s" : ""
+          }`;
+
+          if (State.changeLog.length === 0) {
+            content.innerHTML = `
+        <div class="change-log-empty">
+          No se han realizado modificaciones aún. Los cambios aplicados se registrarán aquí.
+        </div>
+      `;
+            return;
+          }
+
+          // Renderizar en orden inverso (más reciente primero)
+          const logsHTML = [...State.changeLog]
+            .reverse()
+            .map((entry, index) => {
+              const actualIndex = State.changeLog.length - 1 - index;
+              const time = entry.timestamp.toLocaleString("es-ES", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              });
+
+              const mod = entry.modification;
+              let modificationText = "";
+
+              switch (mod.type) {
+                case "replace":
+                  modificationText = `Campo "<strong>${mod.field}</strong>" → Reemplazar con "<strong>${mod.newValue}</strong>"`;
+                  break;
+                case "append":
+                  modificationText = `Campo "<strong>${mod.field}</strong>" → Añadir al final: "<strong>${mod.newValue}</strong>"`;
+                  break;
+                case "prepend":
+                  modificationText = `Campo "<strong>${mod.field}</strong>" → Añadir al inicio: "<strong>${mod.newValue}</strong>"`;
+                  break;
+                case "clear":
+                  modificationText = `Campo "<strong>${mod.field}</strong>" → Limpiar campo`;
+                  break;
+                case "findReplace":
+                  modificationText = `Campo "<strong>${mod.field}</strong>" → Buscar "<strong>${mod.findText}</strong>" y reemplazar por "<strong>${mod.replaceText}</strong>"`;
+                  break;
+              }
+
+              const filtersHTML =
+                entry.filters.length > 0
+                  ? `
+        <div class="change-log-filters">
+          <strong>Filtros aplicados (${entry.filterLogic.toUpperCase()}):</strong>
+          ${entry.filters
+            .map(
+              (f) => `
+            <div class="change-log-filter-item">
+              • ${f.column} ${this.getOperatorText(f.operator)} ${
+                f.value ? '"' + f.value + '"' : ""
+              }
+            </div>
+          `
+            )
+            .join("")}
+        </div>
+      `
+                  : '<div class="change-log-detail"><span class="change-log-detail-label">Filtros:</span><span class="change-log-detail-value">Sin filtros (todas las filas)</span></div>';
+
+              return `
+        <div class="change-log-item">
+          <div class="change-log-timestamp">
+            🕒 ${time} <span style="color:var(--border);">|</span> Cambio #${
+                actualIndex + 1
+              }
+          </div>
+          <div class="change-log-modification">
+            ${modificationText}
+          </div>
+          <div class="change-log-details">
+            <div class="change-log-detail">
+              <span class="change-log-detail-label">Filas afectadas:</span>
+              <span class="change-log-detail-value"><strong style="color:var(--success);">${
+                entry.affectedRows
+              }</strong> filas modificadas</span>
+            </div>
+            ${filtersHTML}
+          </div>
+        </div>
+      `;
+            })
+            .join("");
+
+          content.innerHTML = logsHTML;
+        },
+
+        getOperatorText(operator) {
+          const operators = {
+            contains: "contiene",
+            notContains: "no contiene",
+            equals: "igual a",
+            notEquals: "diferente de",
+            startsWith: "empieza con",
+            endsWith: "termina con",
+            empty: "está vacío",
+            notEmpty: "no está vacío",
+          };
+          return operators[operator] || operator;
+        },
+
+        exportChangeLog() {
+          if (State.changeLog.length === 0) {
+            alert("No hay cambios registrados para exportar.");
+            return;
+          }
+
+          const timestamp = new Date()
+            .toISOString()
+            .replace(/[:.]/g, "-")
+            .slice(0, -5);
+          const filename = `change_log_${timestamp}.txt`;
+
+          let logText =
+            "═══════════════════════════════════════════════════════════════\n";
+          logText += "               DATA EDITOR PRO - HISTORIAL DE CAMBIOS\n";
+          logText +=
+            "═══════════════════════════════════════════════════════════════\n\n";
+          logText += `Fecha de exportación: ${new Date().toLocaleString(
+            "es-ES"
+          )}\n`;
+          logText += `Total de modificaciones: ${State.changeLog.length}\n`;
+          logText += `Total de filas en dataset: ${State.data.length}\n`;
+          logText += `Total de filas modificadas: ${State.modifiedRowIndices.size}\n\n`;
+
+          State.changeLog.forEach((entry, index) => {
+            const time = entry.timestamp.toLocaleString("es-ES", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+            });
+
+            const mod = entry.modification;
+
+            logText +=
+              "───────────────────────────────────────────────────────────────\n";
+            logText += `CAMBIO #${index + 1}\n`;
+            logText +=
+              "───────────────────────────────────────────────────────────────\n";
+            logText += `Fecha/Hora: ${time}\n\n`;
+
+            logText += `MODIFICACIÓN:\n`;
+            logText += `  Campo: ${mod.field}\n`;
+            logText += `  Tipo: ${this.getModificationTypeText(mod.type)}\n`;
+
+            switch (mod.type) {
+              case "replace":
+                logText += `  Nuevo valor: "${mod.newValue}"\n`;
+                break;
+              case "append":
+                logText += `  Texto añadido al final: "${mod.newValue}"\n`;
+                break;
+              case "prepend":
+                logText += `  Texto añadido al inicio: "${mod.newValue}"\n`;
+                break;
+              case "clear":
+                logText += `  Acción: Campo limpiado (vacío)\n`;
+                break;
+              case "findReplace":
+                logText += `  Buscar: "${mod.findText}"\n`;
+                logText += `  Reemplazar por: "${mod.replaceText}"\n`;
+                break;
+            }
+
+            logText += `\nFILAS AFECTADAS: ${entry.affectedRows}\n\n`;
+
+            if (entry.filters.length > 0) {
+              logText += `FILTROS APLICADOS (Lógica: ${entry.filterLogic.toUpperCase()}):\n`;
+              entry.filters.forEach((filter, i) => {
+                logText += `  ${i + 1}. ${filter.column} ${this.getOperatorText(
+                  filter.operator
+                )}`;
+                if (filter.value) {
+                  logText += ` "${filter.value}"`;
+                }
+                logText += "\n";
+              });
+            } else {
+              logText += `FILTROS: Ninguno (se aplicó a todas las filas)\n`;
+            }
+
+            logText += "\n";
+          });
+
+          logText +=
+            "═══════════════════════════════════════════════════════════════\n";
+          logText += "                          FIN DEL LOG\n";
+          logText +=
+            "═══════════════════════════════════════════════════════════════\n";
+
+          const blob = new Blob([logText], {
+            type: "text/plain;charset=utf-8",
+          });
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = filename;
+          link.click();
+
+          Utils.setStatus("success", `Log exportado: ${filename}`, "📥");
+        },
+
+        getModificationTypeText(type) {
+          const types = {
+            replace: "Reemplazar Valor",
+            append: "Añadir al Final",
+            prepend: "Añadir al Inicio",
+            clear: "Limpiar Campo",
+            findReplace: "Buscar y Reemplazar",
+          };
+          return types[type] || type;
+        },
+
         togglePreview() {
           if (this.previewMode) {
-            // Si ya está en modo preview, cancelar y volver
             this.cancelPreview();
           } else {
-            // Si no está en preview, mostrar preview
             this.previewChanges();
           }
         },
@@ -1635,7 +2562,6 @@
           this.previewMode = true;
           this.renderTable(filteredData);
 
-          // Actualizar botón a modo "Atrás"
           const previewBtn = document.getElementById("previewChangesBtn");
           previewBtn.innerHTML = "← Atrás";
           previewBtn.classList.remove("btn-warning");
@@ -1659,8 +2585,6 @@
         },
 
         cancelPreview() {
-          const field = document.getElementById("fieldToEdit").value;
-
           // Limpiar todas las previsualizaciones
           State.data.forEach((row) => {
             State.columns.forEach((col) => {
@@ -1672,7 +2596,6 @@
           const filteredData = Utils.applyFilters(State.data, State.filters);
           this.renderTable(filteredData);
 
-          // Restaurar botón a modo "Previsualizar"
           const previewBtn = document.getElementById("previewChangesBtn");
           previewBtn.innerHTML = "👁️ Previsualizar Cambios";
           previewBtn.classList.remove("btn-ghost");
@@ -1687,6 +2610,12 @@
 
         applyChanges() {
           const field = document.getElementById("fieldToEdit").value;
+          const modifyType = document.getElementById("modifyType").value;
+          const newValue = document.getElementById("newValue").value;
+          const findText = document.getElementById("findText").value;
+          const replaceText = document.getElementById("replaceText").value;
+
+          let affectedCount = 0;
 
           State.data.forEach((row) => {
             if (row[`_preview_${field}`] !== undefined) {
@@ -1694,15 +2623,26 @@
               row._modified = true;
               State.modifiedRowIndices.add(row._rowId);
               delete row[`_preview_${field}`];
+              affectedCount++;
             }
           });
+
+          // Registrar cambio en el log
+          const modification = {
+            field: field,
+            type: modifyType,
+            newValue: newValue,
+            findText: findText,
+            replaceText: replaceText,
+            affectedRows: affectedCount,
+          };
+          this.addToChangeLog(modification);
 
           this.previewMode = false;
           const filteredData = Utils.applyFilters(State.data, State.filters);
           this.renderTable(filteredData);
           this.updateEditorStats();
 
-          // Restaurar botón a modo "Previsualizar"
           const previewBtn = document.getElementById("previewChangesBtn");
           previewBtn.innerHTML = "👁️ Previsualizar Cambios";
           previewBtn.classList.remove("btn-ghost");
@@ -1715,7 +2655,7 @@
 
           Utils.setStatus(
             "success",
-            "✅ Cambios aplicados correctamente",
+            `✅ ${affectedCount} filas modificadas y registradas en el historial`,
             "✅"
           );
         },
@@ -1723,13 +2663,14 @@
         undoChanges() {
           State.data = JSON.parse(JSON.stringify(State.originalData));
           State.modifiedRowIndices.clear();
+          State.changeLog = [];
 
           this.previewMode = false;
           const filteredData = Utils.applyFilters(State.data, State.filters);
           this.renderTable(filteredData);
           this.updateEditorStats();
+          this.renderChangeLog();
 
-          // Restaurar botón a modo "Previsualizar"
           const previewBtn = document.getElementById("previewChangesBtn");
           previewBtn.innerHTML = "👁️ Previsualizar Cambios";
           previewBtn.classList.remove("btn-ghost");
@@ -1738,7 +2679,7 @@
           document.getElementById("undoChangesBtn").disabled = true;
           Utils.setStatus(
             "info",
-            "Cambios deshechos. Datos restaurados al estado original",
+            "Cambios deshechos. Datos y log restaurados al estado original",
             "↩️"
           );
         },
@@ -1791,27 +2732,193 @@
       };
 
       // ============================================
-      // EXPORT MANAGER (STEP 4 - ANTIGUO STEP 5)
+      // EXPORT MANAGER (STEP 4)
       // ============================================
       const ExportManager = {
         init() {
           this.render();
           this.setupEvents();
+          this.updateCsvOptionsVisibility();
+          this.updateDelimiterPreview();
         },
 
         setupEvents() {
+          const exportBtn = document.getElementById("exportDataBtn");
+          const newExportBtn = exportBtn.cloneNode(true);
+          exportBtn.replaceWith(newExportBtn);
+
+          const resetBtn = document.getElementById("resetAllBtn");
+          const newResetBtn = resetBtn.cloneNode(true);
+          resetBtn.replaceWith(newResetBtn);
+
+          const scopeSelect = document.getElementById("exportScope");
+          const newScopeSelect = scopeSelect.cloneNode(true);
+          scopeSelect.replaceWith(newScopeSelect);
+
+          const formatSelect = document.getElementById("exportFormat");
+          const newFormatSelect = formatSelect.cloneNode(true);
+          formatSelect.replaceWith(newFormatSelect);
+
+          // ← NUEVO: Listeners para opciones CSV
+          const delimiterSelect = document.getElementById("exportCsvDelimiter");
+          const encodingSelect = document.getElementById("exportCsvEncoding");
+          const quotingSelect = document.getElementById("exportCsvQuoting");
+
+          // Añadir listeners frescos
           document
             .getElementById("exportDataBtn")
             .addEventListener("click", () => this.exportData());
           document
             .getElementById("resetAllBtn")
             .addEventListener("click", () => this.resetAll());
-
           document
             .getElementById("exportScope")
             .addEventListener("change", () => this.updatePreview());
+
+          // ← NUEVO: Listener para cambio de formato
+          document
+            .getElementById("exportFormat")
+            .addEventListener("change", () => {
+              this.updateCsvOptionsVisibility();
+            });
+
+          // ← NUEVO: Listeners para opciones CSV
+          delimiterSelect.addEventListener("change", () =>
+            this.updateDelimiterPreview()
+          );
+          encodingSelect.addEventListener("change", () =>
+            this.updateDelimiterPreview()
+          );
+          quotingSelect.addEventListener("change", () =>
+            this.updateDelimiterPreview()
+          );
         },
 
+        updateCsvOptionsVisibility() {
+          const format = document.getElementById("exportFormat").value;
+          const csvPanel = document.getElementById("csvOptionsPanel");
+
+          if (format === "csv") {
+            csvPanel.style.display = "block";
+            this.updateDelimiterPreview();
+          } else {
+            csvPanel.style.display = "none";
+          }
+        },
+
+        updateDelimiterPreview() {
+          const previewDiv = document.getElementById("delimiterPreview");
+          const delimiter = document.getElementById("exportCsvDelimiter").value;
+          const quoting = document.getElementById("exportCsvQuoting").value;
+
+          if (!State.data || State.data.length === 0) {
+            previewDiv.textContent = "No hay datos para previsualizar";
+            return;
+          }
+
+          // Obtener las primeras 5 columnas para la preview
+          const allColumns = State.columns.filter(
+            (col) => !col.startsWith("_")
+          );
+          const columns = allColumns.slice(0, 5);
+          const sampleRow = State.data[0];
+
+          const delimiterDisplay =
+            delimiter === "\t"
+              ? '<span style="color:var(--warning);">→</span>'
+              : `<span style="color:var(--warning);">${delimiter}</span>`;
+          const actualDelimiter = delimiter === "\t" ? "\t" : delimiter;
+
+          const escapeForPreview = (value) => {
+            let strValue =
+              value === null || value === undefined ? "" : String(value);
+
+            if (quoting === "all") {
+              return `<span style="color:var(--accent);">"</span>${strValue}<span style="color:var(--accent);">"</span>`;
+            } else if (quoting === "none") {
+              return strValue;
+            } else {
+              // Minimal
+              const needsQuotes =
+                strValue.includes(actualDelimiter) ||
+                strValue.includes('"') ||
+                strValue.includes("\n") ||
+                strValue.startsWith(" ") ||
+                strValue.endsWith(" ");
+
+              if (needsQuotes) {
+                return `<span style="color:var(--accent);">"</span>${strValue.replace(
+                  /"/g,
+                  '""'
+                )}<span style="color:var(--accent);">"</span>`;
+              }
+              return strValue;
+            }
+          };
+
+          // Construir preview de header
+          const headerParts = columns.map((col) => escapeForPreview(col));
+          const headerPreview = headerParts.join(delimiterDisplay);
+
+          // Construir preview de data
+          const dataParts = columns.map((col) => {
+            const value = sampleRow.hasOwnProperty(col) ? sampleRow[col] : "";
+            return escapeForPreview(value);
+          });
+          const dataPreview = dataParts.join(delimiterDisplay);
+
+          const encoding = document.getElementById("exportCsvEncoding").value;
+          const encodingNote =
+            encoding === "utf-8-bom"
+              ? ' <span style="color:var(--warning);">(con BOM para Excel)</span>'
+              : "";
+
+          const moreColumns =
+            allColumns.length > 5
+              ? `${delimiterDisplay}<span style="color:var(--muted);">... (+${
+                  allColumns.length - 5
+                } columnas más)</span>`
+              : "";
+
+          previewDiv.innerHTML = `
+            <div style="margin-bottom:8px;">
+              <strong style="color:var(--muted);font-size:11px;">ENCABEZADOS (${
+                allColumns.length
+              } columnas totales):</strong><br>
+              ${headerPreview}${moreColumns}
+            </div>
+            <div>
+              <strong style="color:var(--muted);font-size:11px;">DATOS (ejemplo de primera fila):</strong><br>
+              ${dataPreview}${moreColumns}
+            </div>
+            <br>
+            <span style="color:var(--muted);font-size:11px;">
+              📌 Delimitador: <strong>${
+                delimiter === "\t"
+                  ? "Tabulador (→)"
+                  : delimiter === ","
+                  ? "Coma (,)"
+                  : delimiter === ";"
+                  ? "Punto y coma (;)"
+                  : "Pipe (|)"
+              }</strong> |
+              Codificación: <strong>${encoding}</strong>${encodingNote} |
+              Entrecomillado: <strong>${
+                quoting === "minimal"
+                  ? "Mínimo"
+                  : quoting === "all"
+                  ? "Todos"
+                  : "Ninguno"
+              }</strong>
+            </span>
+            <br>
+            <span style="color:var(--success);font-size:11px;">
+              ✅ Se exportarán <strong>${
+                allColumns.length
+              } columnas</strong> completas para cada fila
+            </span>
+          `;
+        },
         render() {
           this.updateStats();
           this.updatePreview();
@@ -1882,25 +2989,69 @@
               dataToExport = State.data;
           }
 
+          if (dataToExport.length === 0) {
+            alert("No hay datos para exportar con los filtros seleccionados.");
+            return;
+          }
+
           const columns = State.columns.filter((col) => !col.startsWith("_"));
-          const timestamp = new Date().toISOString().split("T")[0];
-          const filename = `data_export_${timestamp}`;
+          const timestamp = new Date()
+            .toISOString()
+            .replace(/[:.]/g, "-")
+            .slice(0, -5);
+          const scopeText =
+            scope === "visible"
+              ? "filtered"
+              : scope === "modified"
+              ? "modified"
+              : "full";
+          const filename = `data_export_${scopeText}_${timestamp}`;
 
           if (format === "csv") {
-            Utils.exportToCSV(dataToExport, State.columns, `${filename}.csv`);
+            // ← NUEVO: Obtener opciones CSV
+            const delimiter =
+              document.getElementById("exportCsvDelimiter").value;
+            const encoding = document.getElementById("exportCsvEncoding").value;
+            const quoting = document.getElementById("exportCsvQuoting").value;
+
+            const csvOptions = {
+              delimiter: delimiter === "\\t" ? "\t" : delimiter,
+              encoding: encoding,
+              quoting: quoting,
+            };
+
+            Utils.exportToCSV(
+              dataToExport,
+              State.columns,
+              `${filename}.csv`,
+              csvOptions
+            );
+
+            const delimiterName =
+              delimiter === "\t"
+                ? "Tabulador"
+                : delimiter === ","
+                ? "Coma"
+                : delimiter === ";"
+                ? "Punto y coma"
+                : "Pipe";
+            Utils.setStatus(
+              "success",
+              `✅ ${dataToExport.length} filas exportadas (CSV con ${delimiterName})`,
+              "💾"
+            );
           } else {
             Utils.exportToExcel(
               dataToExport,
               State.columns,
               `${filename}.xlsx`
             );
+            Utils.setStatus(
+              "success",
+              `✅ ${dataToExport.length} filas exportadas (Excel)`,
+              "💾"
+            );
           }
-
-          Utils.setStatus(
-            "success",
-            `✅ ${dataToExport.length} filas exportadas correctamente`,
-            "💾"
-          );
         },
 
         resetAll() {
@@ -1916,6 +3067,7 @@
             State.filters = [];
             State.modifications = [];
             State.modifiedRowIndices.clear();
+            State.changeLog = [];
 
             document.getElementById("fileInput").value = "";
             Navigation.goToStep(1);
