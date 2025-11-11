@@ -1363,12 +1363,37 @@
             reader.onload = (e) => {
               try {
                 const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: "array" });
+                const workbook = XLSX.read(data, {
+                  type: "array",
+                  cellDates: true, // ← Forzar conversión a fechas
+                  cellNF: false,
+                  cellStyles: true,
+                });
+
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                 const jsonData = XLSX.utils.sheet_to_json(firstSheet, {
                   header: 1,
+                  raw: false, // ← No usar valores raw
+                  dateNF: "yyyy-mm-dd", // ← Formato de fecha
                 });
-                resolve(jsonData);
+
+                // Post-procesar para detectar números que podrían ser fechas
+                const processedData = jsonData.map((row, rowIndex) => {
+                  return row.map((cell, colIndex) => {
+                    // Si es un número entre 40000 y 50000 (rango aprox 2009-2036)
+                    // probablemente es una fecha de Excel
+                    if (
+                      typeof cell === "number" &&
+                      cell >= 25569 &&
+                      cell <= 65000
+                    ) {
+                      return this.excelDateToJSDate(cell);
+                    }
+                    return cell;
+                  });
+                });
+
+                resolve(processedData);
               } catch (error) {
                 reject(error);
               }
@@ -1378,6 +1403,23 @@
           });
         },
 
+        // Convertir número serial de Excel a fecha
+        excelDateToJSDate(serial) {
+          if (typeof serial !== "number") return serial;
+
+          // Excel epoch: 1900-01-01 (con ajuste por bug de Excel)
+          const epoch = new Date(1899, 11, 30);
+          const days = Math.floor(serial);
+          const milliseconds = days * 24 * 60 * 60 * 1000;
+          const date = new Date(epoch.getTime() + milliseconds);
+
+          // Formatear YYYY-MM-DD
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          const day = String(date.getDate()).padStart(2, "0");
+
+          return `${year}-${month}-${day}`;
+        },
         // Normalizar datos
         normalizeData(rawData, headerRowIndex = 0) {
           if (!rawData || rawData.length === 0)
@@ -2904,7 +2946,11 @@
               }</strong> |
               Codificación: <strong>${encoding}</strong>${encodingNote} |
               Entrecomillado: <strong>${
-                quoting === "minimal" ? "Mínimo" : quoting === "all" ? "Todos" : "Ninguno"
+                quoting === "minimal"
+                  ? "Mínimo"
+                  : quoting === "all"
+                  ? "Todos"
+                  : "Ninguno"
               }</strong>
             </span>
             <br>
