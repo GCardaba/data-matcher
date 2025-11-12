@@ -1326,10 +1326,10 @@
                 inQuotes = !inQuotes;
               }
             } else if (char === delimiter && !inQuotes) {
-              row.push(current);
+              row.push(this.inferType(current)); // ← CAMBIO: inferir tipo
               current = "";
             } else if (char === "\n" && !inQuotes) {
-              row.push(current);
+              row.push(this.inferType(current)); // ← CAMBIO: inferir tipo
               lines.push(row);
               row = [];
               current = "";
@@ -1339,11 +1339,44 @@
           }
 
           if (current || row.length) {
-            row.push(current);
+            row.push(this.inferType(current)); // ← CAMBIO: inferir tipo
             lines.push(row);
           }
 
-          return lines.filter((line) => line.some((cell) => cell.trim()));
+          return lines.filter((line) =>
+            line.some((cell) => cell !== "" && cell !== null)
+          );
+        },
+
+        // ← NUEVA FUNCIÓN: Inferir tipo de dato
+        inferType(value) {
+          // String vacío
+          if (value === "") return "";
+
+          const trimmed = value.trim();
+
+          // Intentar parsear como número
+          if (/^-?\d+$/.test(trimmed)) {
+            // Entero
+            return parseInt(trimmed, 10);
+          }
+
+          if (/^-?\d*\.\d+$/.test(trimmed) || /^-?\d+\.\d*$/.test(trimmed)) {
+            // Float
+            return parseFloat(trimmed);
+          }
+
+          // Notación científica
+          if (/^-?\d*\.?\d+e[+-]?\d+$/i.test(trimmed)) {
+            return parseFloat(trimmed);
+          }
+
+          // Booleanos
+          if (trimmed.toLowerCase() === "true") return true;
+          if (trimmed.toLowerCase() === "false") return false;
+
+          // Si llega aquí, es string
+          return value;
         },
 
         // Leer archivo como texto
@@ -1365,35 +1398,63 @@
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, {
                   type: "array",
-                  cellDates: true, // ← Forzar conversión a fechas
+                  cellDates: true,
                   cellNF: false,
                   cellStyles: true,
+                  raw: false,
                 });
 
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const jsonData = XLSX.utils.sheet_to_json(firstSheet, {
-                  header: 1,
-                  raw: false, // ← No usar valores raw
-                  dateNF: "yyyy-mm-dd", // ← Formato de fecha
-                });
+                const range = XLSX.utils.decode_range(firstSheet["!ref"]);
+                const jsonData = [];
 
-                // Post-procesar para detectar números que podrían ser fechas
-                const processedData = jsonData.map((row, rowIndex) => {
-                  return row.map((cell, colIndex) => {
-                    // Si es un número entre 40000 y 50000 (rango aprox 2009-2036)
-                    // probablemente es una fecha de Excel
-                    if (
-                      typeof cell === "number" &&
-                      cell >= 25569 &&
-                      cell <= 65000
-                    ) {
-                      return this.excelDateToJSDate(cell);
+                // Procesar cada fila manteniendo tipos
+                for (let R = range.s.r; R <= range.e.r; ++R) {
+                  const row = [];
+                  for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+                    const cell = firstSheet[cellAddress];
+
+                    if (!cell) {
+                      row.push("");
+                      continue;
                     }
-                    return cell;
-                  });
-                });
 
-                resolve(processedData);
+                    // Preservar el tipo de dato original
+                    let value;
+
+                    if (cell.t === "n") {
+                      // Número
+                      if (cell.z && this.isExcelDateFormat(cell.z)) {
+                        // Es una fecha
+                        value = this.excelDateToJSDate(cell.v);
+                      } else {
+                        // Es un número normal - MANTENER COMO NÚMERO
+                        value = cell.v;
+                      }
+                    } else if (cell.t === "d") {
+                      // Fecha nativa de JS
+                      value = this.formatDate(cell.v);
+                    } else if (cell.t === "b") {
+                      // Booleano
+                      value = cell.v;
+                    } else if (cell.t === "s") {
+                      // String
+                      value = cell.v;
+                    } else if (cell.t === "e") {
+                      // Error
+                      value = "";
+                    } else {
+                      // Usar formato formateado si existe, sino el valor raw
+                      value = cell.w !== undefined ? cell.w : cell.v;
+                    }
+
+                    row.push(value);
+                  }
+                  jsonData.push(row);
+                }
+
+                resolve(jsonData);
               } catch (error) {
                 reject(error);
               }
@@ -1403,17 +1464,59 @@
           });
         },
 
+        // Detectar si un formato de Excel es de fecha
+        isExcelDateFormat(fmt) {
+          if (!fmt) return false;
+
+          const fmtLower = fmt.toLowerCase();
+
+          // Códigos de formato de fecha de Excel
+          const dateFormatCodes = [
+            14, 15, 16, 17, 18, 19, 20, 21, 22, 27, 30, 36, 45, 46, 47,
+          ];
+
+          // Patrones de formato de fecha
+          const datePatterns = [
+            /[dmyhs]/i,
+            /\bdd\b/i,
+            /\bmm\b/i,
+            /\byy/i,
+            /\bh+:m+/i,
+          ];
+
+          // Si contiene separadores de fecha y letras de fecha
+          if (fmtLower.match(/[dmyhs]/)) {
+            const hasDateSeparators = /[\/\-\s:.]/.test(fmtLower);
+            const hasDateLetters = /[dmy]/.test(fmtLower);
+            if (hasDateSeparators && hasDateLetters) return true;
+          }
+
+          return false;
+        },
+
         // Convertir número serial de Excel a fecha
         excelDateToJSDate(serial) {
           if (typeof serial !== "number") return serial;
 
-          // Excel epoch: 1900-01-01 (con ajuste por bug de Excel)
           const epoch = new Date(1899, 11, 30);
           const days = Math.floor(serial);
           const milliseconds = days * 24 * 60 * 60 * 1000;
           const date = new Date(epoch.getTime() + milliseconds);
 
-          // Formatear YYYY-MM-DD
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          const day = String(date.getDate()).padStart(2, "0");
+
+          return `${year}-${month}-${day}`;
+        },
+
+        formatDate(date) {
+          if (!(date instanceof Date)) {
+            date = new Date(date);
+          }
+
+          if (isNaN(date.getTime())) return date.toString();
+
           const year = date.getFullYear();
           const month = String(date.getMonth() + 1).padStart(2, "0");
           const day = String(date.getDate()).padStart(2, "0");
@@ -1426,14 +1529,21 @@
             return { columns: [], data: [] };
 
           const headers = rawData[headerRowIndex];
-          const columns = headers.map((h, i) => h || `Column_${i + 1}`);
+          const columns = headers.map((h, i) => String(h || `Column_${i + 1}`));
 
           const data = rawData
             .slice(headerRowIndex + 1)
             .map((row, rowIndex) => {
               const obj = { _rowId: rowIndex, _modified: false };
               columns.forEach((col, i) => {
-                obj[col] = row[i] !== undefined ? row[i] : "";
+                const value = row[i];
+
+                // Preservar el tipo: no convertir a string si ya es número
+                if (value === undefined || value === null) {
+                  obj[col] = "";
+                } else {
+                  obj[col] = value; // Mantener tipo original
+                }
               });
               return obj;
             });
@@ -1489,98 +1599,211 @@
 
         // Exportar CSV
         exportToCSV(data, columns, filename = "export.csv", options = {}) {
-          const {
-            delimiter = ",",
-            encoding = "utf-8",
-            quoting = "minimal",
-          } = options;
+          // Opciones por defecto
+          const delimiter = options.delimiter || ",";
+          const encoding = options.encoding || "utf-8";
+          const quoting = options.quoting || "minimal";
 
-          // Filtrar columnas internas (_rowId, _modified, etc.)
+          // Convertir delimitador escapado a real
+          const actualDelimiter = delimiter === "\\t" ? "\t" : delimiter;
+
+          // Obtener headers (sin columnas internas)
           const headers = columns.filter((col) => !col.startsWith("_"));
 
-          const escapeField = (value) => {
-            // Convertir a string, manejar null/undefined/números
-            let strValue = "";
-
-            if (value === null || value === undefined) {
-              strValue = "";
-            } else if (typeof value === "number") {
-              strValue = String(value);
-            } else {
-              strValue = String(value);
+          // Función para escapar valores según el modo de entrecomillado
+          const escapeCSVValue = (value) => {
+            // Valores vacíos
+            if (value === null || value === undefined || value === "") {
+              return quoting === "all" ? '""' : "";
             }
 
-            // Sin entrecomillado
+            // Números: mantener como número con punto decimal
+            if (typeof value === "number") {
+              if (!Number.isFinite(value)) return "";
+              const numStr = value.toString();
+
+              // Si quoting es "all", entrecomillar todo
+              if (quoting === "all") {
+                return `"${numStr}"`;
+              }
+
+              // Si contiene el delimitador, entrecomillar
+              if (numStr.includes(actualDelimiter)) {
+                return `"${numStr}"`;
+              }
+
+              return numStr;
+            }
+
+            // Booleanos
+            if (typeof value === "boolean") {
+              const boolStr = value.toString();
+              return quoting === "all" ? `"${boolStr}"` : boolStr;
+            }
+
+            // Convertir a string
+            const strValue = String(value);
+
+            // Modo "none": sin comillas nunca
             if (quoting === "none") {
-              return strValue;
+              // Escapar el delimitador reemplazándolo por espacio
+              return strValue.replace(new RegExp(actualDelimiter, "g"), " ");
             }
 
-            // Entrecomillar todos los campos
+            // Modo "all": entrecomillar todo
             if (quoting === "all") {
-              return `"${strValue.replace(/"/g, '""')}"`;
+              const escaped = strValue.replace(/"/g, '""');
+              return `"${escaped}"`;
             }
 
-            // Entrecomillado mínimo (solo si contiene caracteres especiales)
-            const needsQuotes =
-              strValue.includes(delimiter) ||
+            // Modo "minimal": entrecomillar solo si es necesario
+            const needsQuoting =
+              strValue.includes(actualDelimiter) ||
               strValue.includes('"') ||
               strValue.includes("\n") ||
               strValue.includes("\r") ||
               strValue.startsWith(" ") ||
-              strValue.endsWith(" "); // espacios al inicio/final
+              strValue.endsWith(" ");
 
-            if (needsQuotes) {
-              return `"${strValue.replace(/"/g, '""')}"`;
+            if (needsQuoting) {
+              const escaped = strValue.replace(/"/g, '""');
+              return `"${escaped}"`;
             }
 
             return strValue;
           };
 
-          // Construir las filas del CSV
-          const rows = [];
+          // Construir filas del CSV
+          const csvRows = [
+            // Encabezados
+            headers.map((h) => escapeCSVValue(h)).join(actualDelimiter),
+            // Datos
+            ...data.map((row) =>
+              headers
+                .map((col) => escapeCSVValue(row[col]))
+                .join(actualDelimiter)
+            ),
+          ];
 
-          // Fila de encabezados
-          rows.push(headers.map((h) => escapeField(h)).join(delimiter));
+          const csvContent = csvRows.join("\n");
 
-          // Filas de datos - IMPORTANTE: asegurar que cada fila tenga TODOS los campos
-          data.forEach((row) => {
-            const rowData = headers.map((col) => {
-              // Obtener el valor de cada columna, usar string vacío si no existe
-              const value = row.hasOwnProperty(col) ? row[col] : "";
-              return escapeField(value);
-            });
-            rows.push(rowData.join(delimiter));
-          });
-
-          const csvContent = rows.join("\n");
-
+          // Manejar codificación
           let finalContent = csvContent;
-          let mimeType = "text/csv;charset=utf-8;";
+          let blobOptions = {};
 
-          // Añadir BOM si se seleccionó UTF-8 con BOM
-          if (encoding === "utf-8-bom") {
-            finalContent = "\ufeff" + csvContent;
+          switch (encoding) {
+            case "utf-8-bom":
+              // UTF-8 con BOM (mejor para Excel)
+              finalContent = "\uFEFF" + csvContent;
+              blobOptions = { type: "text/csv;charset=utf-8;" };
+              break;
+
+            case "utf-8":
+              // UTF-8 sin BOM
+              blobOptions = { type: "text/csv;charset=utf-8;" };
+              break;
+
+            case "windows-1252":
+              // Windows-1252 (ANSI)
+              blobOptions = { type: "text/csv;charset=windows-1252;" };
+              break;
+
+            case "iso-8859-1":
+              // ISO-8859-1 (Latin-1)
+              blobOptions = { type: "text/csv;charset=iso-8859-1;" };
+              break;
+
+            default:
+              blobOptions = { type: "text/csv;charset=utf-8;" };
           }
 
-          const blob = new Blob([finalContent], { type: mimeType });
+          // Crear blob y descargar
+          const blob = new Blob([finalContent], blobOptions);
           const link = document.createElement("a");
           link.href = URL.createObjectURL(blob);
           link.download = filename;
           link.click();
+
+          // Liberar memoria
+          setTimeout(() => URL.revokeObjectURL(link.href), 100);
         },
 
         // Exportar Excel
         exportToExcel(data, columns, filename = "export.xlsx") {
           const headers = columns.filter((col) => !col.startsWith("_"));
-          const wsData = [
-            headers,
-            ...data.map((row) => headers.map((col) => row[col])),
-          ];
 
-          const ws = XLSX.utils.aoa_to_sheet(wsData);
+          // Crear worksheet manualmente para preservar tipos
+          const ws = XLSX.utils.aoa_to_sheet([headers]);
+
+          // Añadir datos fila por fila preservando tipos
+          data.forEach((row, rowIndex) => {
+            headers.forEach((col, colIndex) => {
+              const cellAddress = XLSX.utils.encode_cell({
+                r: rowIndex + 1,
+                c: colIndex,
+              });
+              const value = row[col];
+
+              // Crear celda con tipo apropiado
+              if (value === "" || value === null || value === undefined) {
+                ws[cellAddress] = { t: "s", v: "" };
+              } else if (typeof value === "number") {
+                // Número: preservar como número
+                ws[cellAddress] = { t: "n", v: value };
+              } else if (typeof value === "boolean") {
+                // Booleano
+                ws[cellAddress] = { t: "b", v: value };
+              } else if (this.isDateString(value)) {
+                // Fecha: intentar convertir a fecha de Excel
+                const date = new Date(value);
+                if (!isNaN(date.getTime())) {
+                  const excelDate = this.jsDateToExcelDate(date);
+                  ws[cellAddress] = { t: "n", v: excelDate, z: "yyyy-mm-dd" };
+                } else {
+                  ws[cellAddress] = { t: "s", v: String(value) };
+                }
+              } else {
+                // String
+                ws[cellAddress] = { t: "s", v: String(value) };
+              }
+            });
+          });
+
+          // Establecer rango
+          ws["!ref"] = XLSX.utils.encode_range({
+            s: { r: 0, c: 0 },
+            e: { r: data.length, c: headers.length - 1 },
+          });
+
           const wb = XLSX.utils.book_new();
           XLSX.utils.book_append_sheet(wb, ws, "Data");
           XLSX.writeFile(wb, filename);
+        },
+
+        // ← NUEVA FUNCIÓN: Detectar si un string es una fecha
+        isDateString(value) {
+          if (typeof value !== "string") return false;
+
+          // Patrones comunes de fecha
+          const datePatterns = [
+            /^\d{4}-\d{2}-\d{2}$/, // 2025-08-05
+            /^\d{2}\/\d{2}\/\d{4}$/, // 05/08/2025
+            /^\d{2}-\d{2}-\d{4}$/, // 05-08-2025
+            /^\d{4}\/\d{2}\/\d{2}$/, // 2025/08/05
+            /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/, // ISO format
+          ];
+
+          return datePatterns.some((pattern) => pattern.test(value));
+        },
+
+        // ← NUEVA FUNCIÓN: Convertir fecha JS a número serial de Excel
+        jsDateToExcelDate(date) {
+          const epoch = new Date(1899, 11, 30);
+          const msPerDay = 24 * 60 * 60 * 1000;
+          const days = Math.floor(
+            (date.getTime() - epoch.getTime()) / msPerDay
+          );
+          return days;
         },
 
         // Actualizar status
