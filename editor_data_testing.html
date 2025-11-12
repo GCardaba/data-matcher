@@ -815,7 +815,14 @@
           consolidarán automáticamente. Todos los archivos deben tener la misma
           estructura de columnas.
         </p>
-
+        <div class="status-bar warning" style="margin-bottom: 16px">
+          <span class="icon">⚠️</span>
+          <span>
+            <strong>Nota importante:</strong>
+            Si el archivo contiene más de 100,000 líneas, se recomienda importar
+            en formato CSV en lugar de Excel para un mejor rendimiento.
+          </span>
+        </div>
         <div class="form-group">
           <label class="form-label">Seleccionar archivos (CSV o Excel)</label>
           <input
@@ -1170,6 +1177,14 @@
           Exporta los datos modificados en formato CSV o Excel. Puedes exportar
           todas las filas o solo las filas visibles (filtradas).
         </p>
+        <div class="status-bar warning" style="margin-bottom: 16px">
+          <span class="icon">⚠️</span>
+          <span>
+            <strong>Nota importante:</strong> Si el archivo contiene más de
+            100,000 líneas, se recomienda exportar en formato CSV en lugar de
+            Excel para un mejor rendimiento y compatibilidad.
+          </span>
+        </div>
 
         <div class="stats">
           <div class="stat-card">
@@ -1602,7 +1617,7 @@
           // Opciones por defecto
           const delimiter = options.delimiter || ",";
           const encoding = options.encoding || "utf-8";
-          const quoting = options.quoting || "minimal";
+          const quoting = options.quoting || "all";
 
           // Convertir delimitador escapado a real
           const actualDelimiter = delimiter === "\\t" ? "\t" : delimiter;
