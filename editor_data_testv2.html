@@ -1,5 +1,3 @@
-
-
 <html lang="es">
   <head>
     <meta charset="utf-8" />
@@ -10,6 +8,8 @@
 
     <!-- SheetJS para soporte Excel -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <!-- PapaParse para CSV streaming -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <style>
       :root {
@@ -869,6 +869,31 @@
           </div>
         </div>
 
+        <div class="form-group" style="margin-top: -10px; margin-bottom: 20px">
+          <label
+            class="form-label"
+            style="
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              cursor: pointer;
+            "
+          >
+            <input
+              type="checkbox"
+              id="disableTypeInference"
+              style="width: 16px; height: 16px"
+            />
+            <span
+              >Preservar como texto (No detectar tipos automáticamente)</span
+            >
+          </label>
+          <p style="font-size: 12px; color: var(--muted); margin: 4px 0 0 24px">
+            Activa esto si tienes IDs con ceros a la izquierda (ej: "00123") o
+            números muy largos que no quieres que se conviertan.
+          </p>
+        </div>
+
         <div class="btn-group">
           <button id="loadFilesBtn" class="btn btn-primary" disabled>
             📂 Cargar y Procesar Archivos
@@ -1293,8 +1318,9 @@
       const State = {
         files: [],
         columns: [],
-        data: [],
-        originalData: [],
+        columnMap: {}, // Mapa de nombre columna -> índice
+        data: [], // Array de Arrays
+        originalData: [], // Array de Arrays
         filters: [],
         filterLogic: "or",
         modifications: [],
@@ -1303,6 +1329,7 @@
         fileColumnsInfo: [],
         hasColumnMismatch: false,
         changeLog: [],
+        detectTypes: true, // Default to true
       };
 
       const Utils = {
@@ -1324,57 +1351,55 @@
           return counts[0].delim;
         },
 
-        // Parsear CSV
-        parseCSV(text, delimiter) {
-          const lines = [];
-          let current = "";
-          let inQuotes = false;
-          let row = [];
-
-          for (let i = 0; i < text.length; i++) {
-            const char = text[i];
-            const nextChar = text[i + 1];
-
-            if (char === '"') {
-              if (inQuotes && nextChar === '"') {
-                current += '"';
-                i++;
-              } else {
-                inQuotes = !inQuotes;
-              }
-            } else if (char === delimiter && !inQuotes) {
-              row.push(this.inferType(current)); // ← CAMBIO: inferir tipo
-              current = "";
-            } else if (char === "\n" && !inQuotes) {
-              row.push(this.inferType(current)); // ← CAMBIO: inferir tipo
-              lines.push(row);
-              row = [];
-              current = "";
-            } else if (char !== "\r") {
-              current += char;
-            }
-          }
-
-          if (current || row.length) {
-            row.push(this.inferType(current)); // ← CAMBIO: inferir tipo
-            lines.push(row);
-          }
-
-          return lines.filter((line) =>
-            line.some((cell) => cell !== "" && cell !== null)
-          );
+        // Procesar CSV con PapaParse (Streaming/Worker)
+        async processCSV(
+          input,
+          encoding,
+          delimiter,
+          detectTypes = true,
+          useWorker = true
+        ) {
+          return new Promise((resolve, reject) => {
+            Papa.parse(input, {
+              delimiter:
+                delimiter === "auto"
+                  ? ""
+                  : delimiter === "\\t"
+                  ? "\t"
+                  : delimiter,
+              encoding: encoding,
+              header: false, // Queremos arrays, no objetos
+              skipEmptyLines: true,
+              worker: useWorker, // Usar worker para no bloquear UI
+              dynamicTyping: detectTypes, // PapaParse maneja la inferencia de tipos
+              complete: (results) => {
+                if (results.errors && results.errors.length > 0) {
+                  console.warn("CSV Errors:", results.errors);
+                }
+                resolve(results.data);
+              },
+              error: (err) => reject(err),
+            });
+          });
         },
 
         // ← NUEVA FUNCIÓN: Inferir tipo de dato
-        inferType(value) {
+        inferType(value, detectTypes = true) {
           // String vacío
           if (value === "") return "";
+
+          // Si no se deben detectar tipos, devolver string
+          if (!detectTypes) return value;
 
           const trimmed = value.trim();
 
           // Intentar parsear como número
           if (/^-?\d+$/.test(trimmed)) {
             // Entero
+            // Cuidado con IDs que empiezan por 0 (ej: 00123) -> mantener como string si detectTypes es false (ya manejado arriba)
+            // Pero si detectTypes es true, '00123' se convierte en 123.
+            // Para evitar esto incluso con detectTypes=true, podríamos añadir lógica extra,
+            // pero por ahora respetamos el flag global.
             return parseInt(trimmed, 10);
           }
 
@@ -1407,7 +1432,7 @@
         },
 
         // Procesar archivo Excel
-        async processExcelFile(file) {
+        async processExcelFile(file, detectTypes = true) {
           return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -1440,30 +1465,36 @@
                     // Preservar el tipo de dato original
                     let value;
 
-                    if (cell.t === "n") {
-                      // Número
-                      if (cell.z && this.isExcelDateFormat(cell.z)) {
-                        // Es una fecha
-                        value = this.excelDateToJSDate(cell.v);
-                      } else {
-                        // Es un número normal - MANTENER COMO NÚMERO
-                        value = cell.v;
-                      }
-                    } else if (cell.t === "d") {
-                      // Fecha nativa de JS
-                      value = this.formatDate(cell.v);
-                    } else if (cell.t === "b") {
-                      // Booleano
-                      value = cell.v;
-                    } else if (cell.t === "s") {
-                      // String
-                      value = cell.v;
-                    } else if (cell.t === "e") {
-                      // Error
-                      value = "";
+                    if (!detectTypes) {
+                      // Si no detectamos tipos, intentamos obtener el valor formateado (string)
+                      // cell.w es el texto formateado, cell.v es el valor crudo
+                      value = cell.w !== undefined ? cell.w : String(cell.v);
                     } else {
-                      // Usar formato formateado si existe, sino el valor raw
-                      value = cell.w !== undefined ? cell.w : cell.v;
+                      if (cell.t === "n") {
+                        // Número
+                        if (cell.z && this.isExcelDateFormat(cell.z)) {
+                          // Es una fecha
+                          value = this.excelDateToJSDate(cell.v);
+                        } else {
+                          // Es un número normal - MANTENER COMO NÚMERO
+                          value = cell.v;
+                        }
+                      } else if (cell.t === "d") {
+                        // Fecha nativa de JS
+                        value = this.formatDate(cell.v);
+                      } else if (cell.t === "b") {
+                        // Booleano
+                        value = cell.v;
+                      } else if (cell.t === "s") {
+                        // String
+                        value = cell.v;
+                      } else if (cell.t === "e") {
+                        // Error
+                        value = "";
+                      } else {
+                        // Usar formato formateado si existe, sino el valor raw
+                        value = cell.w !== undefined ? cell.w : cell.v;
+                      }
                     }
 
                     row.push(value);
@@ -1540,32 +1571,49 @@
 
           return `${year}-${month}-${day}`;
         },
-        // Normalizar datos
+        // Normalizar datos (ahora devuelve Arrays)
         normalizeData(rawData, headerRowIndex = 0) {
           if (!rawData || rawData.length === 0)
             return { columns: [], data: [] };
 
+          // Asegurar que tenemos suficientes filas
+          if (headerRowIndex >= rawData.length) {
+            throw new Error("La fila de encabezado especificada no existe");
+          }
+
           const headers = rawData[headerRowIndex];
           const columns = headers.map((h, i) => String(h || `Column_${i + 1}`));
 
+          // Crear mapa de columnas
+          const columnMap = {};
+          columns.forEach((col, i) => (columnMap[col] = i));
+
+          // Extraer datos (sin convertir a objetos)
           const data = rawData
             .slice(headerRowIndex + 1)
             .map((row, rowIndex) => {
-              const obj = { _rowId: rowIndex, _modified: false };
-              columns.forEach((col, i) => {
-                const value = row[i];
+              // Asegurar que la fila tenga el mismo número de columnas
+              // Rellenar con vacíos si faltan, recortar si sobran (aunque slice no recorta, map itera sobre row)
+              // Mejor: crear nuevo array del tamaño correcto
+              const normalizedRow = new Array(columns.length).fill("");
 
-                // Preservar el tipo: no convertir a string si ya es número
-                if (value === undefined || value === null) {
-                  obj[col] = "";
-                } else {
-                  obj[col] = value; // Mantener tipo original
+              row.forEach((cell, i) => {
+                if (i < columns.length) {
+                  normalizedRow[i] =
+                    cell === undefined || cell === null ? "" : cell;
                 }
               });
-              return obj;
+
+              // Añadir metadatos ocultos al final del array o usar un Map externo?
+              // Para mantener compatibilidad con el resto del código que espera _rowId y _modified,
+              // podemos usar propiedades en el array (los arrays son objetos en JS).
+              normalizedRow._rowId = rowIndex;
+              normalizedRow._modified = false;
+
+              return normalizedRow;
             });
 
-          return { columns, data };
+          return { columns, data, columnMap };
         },
 
         // Aplicar filtros (lógica OR/AND dinámica)
@@ -1584,10 +1632,14 @@
           if (validFilters.length === 0) return data;
 
           const logicMethod = State.filterLogic === "or" ? "some" : "every";
+          const colMap = State.columnMap;
 
           return data.filter((row) => {
             return validFilters[logicMethod]((filter) => {
-              const value = String(row[filter.column] || "").toLowerCase();
+              const colIndex = colMap[filter.column];
+              if (colIndex === undefined) return false;
+
+              const value = String(row[colIndex] || "").toLowerCase();
               const filterValue = String(filter.value || "").toLowerCase();
 
               switch (filter.operator) {
@@ -1697,7 +1749,12 @@
             // Datos
             ...data.map((row) =>
               headers
-                .map((col) => escapeCSVValue(row[col]))
+                .map((col) => {
+                  // Encontrar índice de la columna en el array de columnas original
+                  // Nota: columns es el array completo (State.columns)
+                  const colIndex = columns.indexOf(col);
+                  return escapeCSVValue(row[colIndex]);
+                })
                 .join(actualDelimiter)
             ),
           ];
@@ -1759,7 +1816,10 @@
                 r: rowIndex + 1,
                 c: colIndex,
               });
-              const value = row[col];
+
+              // Obtener índice real en el array de datos
+              const realColIndex = columns.indexOf(col);
+              const value = row[realColIndex];
 
               // Crear celda con tipo apropiado
               if (value === "" || value === null || value === undefined) {
@@ -1911,12 +1971,18 @@
 
           fileInput.addEventListener("change", (e) => {
             const files = Array.from(e.target.files);
+            console.log("Files selected:", files);
             State.files = files;
 
             fileCountPill.textContent = `${files.length} archivo${
               files.length !== 1 ? "s" : ""
             } seleccionado${files.length !== 1 ? "s" : ""}`;
-            loadBtn.disabled = files.length === 0;
+
+            if (files.length === 0) {
+              loadBtn.setAttribute("disabled", "true");
+            } else {
+              loadBtn.removeAttribute("disabled");
+            }
 
             this.displayFileList(files);
           });
@@ -1929,13 +1995,13 @@
           const fileListContent = files
             .map(
               (file) => `
-      <div class="file-item">
-        <div>
-          <div class="file-name">📄 ${file.name}</div>
-          <div class="file-meta">${(file.size / 1024).toFixed(2)} KB</div>
-        </div>
-      </div>
-    `
+            <div class="file-item">
+              <div>
+                <div class="file-name">📄 ${file.name}</div>
+                <div class="file-meta">${(file.size / 1024).toFixed(2)} KB</div>
+              </div>
+            </div>
+          `
             )
             .join("");
 
@@ -1945,6 +2011,11 @@
 
         async loadFiles() {
           try {
+            if (State.files.length === 0) {
+              alert("Por favor, selecciona al menos un archivo primero.");
+              return;
+            }
+            console.log("Starting loadFiles...", State.files);
             Utils.setStatus("info", "Cargando archivos...", "⏳");
 
             const delimiter = document.getElementById("csvDelimiter").value;
@@ -1952,9 +2023,16 @@
             const headerRow =
               parseInt(document.getElementById("headerRow").value) - 1;
 
+            // Obtener valor del checkbox
+            const disableTypeInference = document.getElementById(
+              "disableTypeInference"
+            ).checked;
+            State.detectTypes = !disableTypeInference;
+
             let allData = [];
             let allColumns = new Set();
             let fileColumnsInfo = [];
+            let processedFiles = [];
 
             // Procesar cada archivo
             for (const file of State.files) {
@@ -1962,14 +2040,41 @@
               let rawData;
 
               if (isExcel) {
-                rawData = await Utils.processExcelFile(file);
+                rawData = await Utils.processExcelFile(file, State.detectTypes);
               } else {
                 const text = await Utils.readFileAsText(file, encoding);
                 const delim =
                   delimiter === "auto"
                     ? Utils.detectDelimiter(text)
                     : delimiter;
-                rawData = Utils.parseCSV(text, delim === "\\t" ? "\t" : delim);
+                // Usar processCSV en lugar de parseCSV
+                // Nota: processCSV espera un File object, pero aquí le pasamos texto si usamos parseCSV antiguo.
+                // Pero processCSV usa Papa.parse que acepta File o String.
+                // Sin embargo, processCSV está diseñado para File.
+                // Si queremos usar worker con string, PapaParse lo soporta.
+                // Pero FileLoader.loadFiles ya lee el texto para detectar delimitador si es auto.
+                // Si es auto, ya leímos el texto.
+                // Si no es auto, podemos pasar el File directamente a processCSV.
+
+                if (delimiter === "auto") {
+                  // Passing text string, so disable worker
+                  rawData = await Utils.processCSV(
+                    text,
+                    encoding,
+                    delim,
+                    State.detectTypes,
+                    false // Disable worker for text strings
+                  );
+                } else {
+                  // Passing File object, can use worker
+                  rawData = await Utils.processCSV(
+                    file,
+                    encoding,
+                    delimiter,
+                    State.detectTypes,
+                    true // Enable worker for File objects
+                  );
+                }
               }
 
               const normalized = Utils.normalizeData(rawData, headerRow);
@@ -1980,14 +2085,18 @@
                 rowCount: normalized.data.length,
               });
 
+              processedFiles.push(normalized);
+
               // Agregar todas las columnas al set global
               normalized.columns.forEach((col) => allColumns.add(col));
-
-              allData = allData.concat(normalized.data);
             }
 
             // Convertir set a array
             const finalColumns = Array.from(allColumns);
+
+            // Crear mapa global de columnas
+            const finalColumnMap = {};
+            finalColumns.forEach((col, i) => (finalColumnMap[col] = i));
 
             // Detectar si hay discrepancias en columnas
             let hasColumnMismatch = false;
@@ -2009,20 +2118,42 @@
               }
             }
 
-            // Normalizar todas las filas para que tengan todas las columnas
-            allData = allData.map((row) => {
-              const normalizedRow = { ...row };
-              finalColumns.forEach((col) => {
-                if (!(col in normalizedRow)) {
-                  normalizedRow[col] = "";
-                }
+            // Normalizar todas las filas para que tengan todas las columnas (Arrays)
+            processedFiles.forEach((fileData) => {
+              // fileData.data es Array de Arrays
+              // fileData.columnMap es el mapa local
+
+              const alignedData = fileData.data.map((row) => {
+                const newRow = new Array(finalColumns.length).fill("");
+
+                // Copiar datos existentes a su nueva posición
+                fileData.columns.forEach((col, localIndex) => {
+                  const globalIndex = finalColumnMap[col];
+                  newRow[globalIndex] = row[localIndex];
+                });
+
+                // Copiar metadatos
+                newRow._rowId = row._rowId;
+                newRow._modified = row._modified;
+
+                return newRow;
               });
-              return normalizedRow;
+
+              allData = allData.concat(alignedData);
             });
 
+            // Reasignar IDs globales para evitar duplicados si concatenamos archivos
+            allData.forEach((row, i) => (row._rowId = i));
+
             State.columns = finalColumns;
+            State.columnMap = finalColumnMap;
             State.data = allData;
-            State.originalData = JSON.parse(JSON.stringify(allData));
+            State.originalData = allData.map((row) => {
+              const copy = [...row];
+              copy._rowId = row._rowId;
+              copy._modified = row._modified;
+              return copy;
+            }); // Deep copy for arrays
             State.fileColumnsInfo = fileColumnsInfo;
             State.hasColumnMismatch = hasColumnMismatch;
 
@@ -2074,10 +2205,12 @@
           tbody.innerHTML = displayData
             .map(
               (row) => `
-      <tr>
-        ${headers.map((col) => `<td>${row[col] || ""}</td>`).join("")}
-      </tr>
-    `
+            <tr>
+              ${headers
+                .map((col) => `<td>${row[State.columnMap[col]] || ""}</td>`)
+                .join("")}
+            </tr>
+          `
             )
             .join("");
         },
@@ -2115,30 +2248,30 @@
               const presentColumns = [...fileColumns];
 
               return `
-        <div class="file-columns-item">
-          <div class="file-name-header">
-            📄 ${fileInfo.fileName} 
-            <span style="color:var(--muted);font-weight:400;font-size:11px;">
-              (${fileInfo.rowCount} filas, ${fileColumns.size} columnas)
-            </span>
-          </div>
-          <div class="columns-list">
-            ${presentColumns
-              .map((col) => `<span class="column-tag">${col}</span>`)
-              .join("")}
-            ${
-              missingColumns.length > 0
-                ? missingColumns
-                    .map(
-                      (col) =>
-                        `<span class="column-tag missing">❌ ${col}</span>`
-                    )
-                    .join("")
-                : ""
-            }
-          </div>
-        </div>
-      `;
+              <div class="file-columns-item">
+                <div class="file-name-header">
+                  📄 ${fileInfo.fileName}
+                  <span style="color:var(--muted);font-weight:400;font-size:11px;">
+                    (${fileInfo.rowCount} filas, ${fileColumns.size} columnas)
+                  </span>
+                </div>
+                <div class="columns-list">
+                  ${presentColumns
+                    .map((col) => `<span class="column-tag">${col}</span>`)
+                    .join("")}
+                  ${
+                    missingColumns.length > 0
+                      ? missingColumns
+                          .map(
+                            (col) =>
+                              `<span class="column-tag missing">❌ ${col}</span>`
+                          )
+                          .join("")
+                      : ""
+                  }
+                </div>
+              </div>
+            `;
             })
             .join("");
 
@@ -2207,8 +2340,11 @@
         // Obtener valores únicos de una columna
         getUniqueValues(columnName) {
           const values = new Set();
+          const colIndex = State.columnMap[columnName];
+          if (colIndex === undefined) return [];
+
           State.data.forEach((row) => {
-            const value = row[columnName];
+            const value = row[colIndex];
             if (value !== null && value !== undefined && value !== "") {
               values.add(String(value).trim());
             }
@@ -2253,101 +2389,101 @@
                 if (isEqualsOperator) {
                   // Select con valores únicos
                   valueField = `
-            <select class="form-select" data-filter-id="${
-              filter.id
-            }" data-field="value">
-              <option value="">-- Seleccionar valor --</option>
-              ${uniqueValues
-                .map(
-                  (val) => `
-                <option value="${val}" ${
-                    filter.value === val ? "selected" : ""
-                  }>${val}</option>
-              `
-                )
-                .join("")}
-            </select>
-          `;
+                  <select class="form-select" data-filter-id="${
+                    filter.id
+                  }" data-field="value">
+                    <option value="">-- Seleccionar valor --</option>
+                    ${uniqueValues
+                      .map(
+                        (val) => `
+                      <option value="${val}" ${
+                          filter.value === val ? "selected" : ""
+                        }>${val}</option>
+                    `
+                      )
+                      .join("")}
+                  </select>
+                `;
                 } else {
                   // Input de texto normal
                   valueField = `
-            <input type="text" class="form-input" data-filter-id="${filter.id}" data-field="value" 
-                   value="${filter.value}" placeholder="Valor a filtrar">
-          `;
+                  <input type="text" class="form-input" data-filter-id="${filter.id}" data-field="value"
+                         value="${filter.value}" placeholder="Valor a filtrar">
+                `;
                 }
               } else {
                 // Operadores que no necesitan valor (empty, notEmpty)
                 valueField = `
-          <input type="text" class="form-input" value="(no requerido)" disabled>
-        `;
+                <input type="text" class="form-input" value="(no requerido)" disabled>
+              `;
               }
 
               return `
-        <div class="grid grid-4" style="margin-bottom:12px;align-items:end;" data-filter-container="${
-          filter.id
-        }">
-          <div class="form-group" style="margin:0;">
-            <label class="form-label" style="font-size:12px;">Campo</label>
-            <select class="form-select" data-filter-id="${
-              filter.id
-            }" data-field="column">
-              ${columns
-                .map(
-                  (col) =>
-                    `<option value="${col}" ${
-                      filter.column === col ? "selected" : ""
-                    }>${col}</option>`
-                )
-                .join("")}
-            </select>
-          </div>
-          <div class="form-group" style="margin:0;">
-            <label class="form-label" style="font-size:12px;">Operador</label>
-            <select class="form-select" data-filter-id="${
-              filter.id
-            }" data-field="operator">
-              <option value="contains" ${
-                filter.operator === "contains" ? "selected" : ""
-              }>Contiene</option>
-              <option value="notContains" ${
-                filter.operator === "notContains" ? "selected" : ""
-              }>No contiene</option>
-              <option value="equals" ${
-                filter.operator === "equals" ? "selected" : ""
-              }>Igual a</option>
-              <option value="notEquals" ${
-                filter.operator === "notEquals" ? "selected" : ""
-              }>Diferente de</option>
-              <option value="startsWith" ${
-                filter.operator === "startsWith" ? "selected" : ""
-              }>Empieza con</option>
-              <option value="endsWith" ${
-                filter.operator === "endsWith" ? "selected" : ""
-              }>Termina con</option>
-              <option value="empty" ${
-                filter.operator === "empty" ? "selected" : ""
-              }>Está vacío</option>
-              <option value="notEmpty" ${
-                filter.operator === "notEmpty" ? "selected" : ""
-              }>No está vacío</option>
-            </select>
-          </div>
-          <div class="form-group" style="margin:0;">
-            <label class="form-label" style="font-size:12px;">
-              Valor
-              ${
-                isEqualsOperator
-                  ? `<span class="unique-indicator" style="color:var(--success);font-size:10px;margin-left:4px;">(${uniqueValues.length} opciones)</span>`
-                  : ""
-              }
-            </label>
-            ${valueField}
-          </div>
-          <button class="btn btn-danger" data-remove-filter="${
-            filter.id
-          }" style="height:38px;">🗑️</button>
-        </div>
-      `;
+              <div class="grid grid-4" style="margin-bottom:12px;align-items:end;" data-filter-container="${
+                filter.id
+              }">
+                <div class="form-group" style="margin:0;">
+                  <label class="form-label" style="font-size:12px;">Campo</label>
+                  <select class="form-select" data-filter-id="${
+                    filter.id
+                  }" data-field="column">
+                    ${columns
+                      .map(
+                        (col) =>
+                          `<option value="${col}" ${
+                            filter.column === col ? "selected" : ""
+                          }>${col}</option>`
+                      )
+                      .join("")}
+                  </select>
+                </div>
+                <div class="form-group" style="margin:0;">
+                  <label class="form-label" style="font-size:12px;">Operador</label>
+                  <select class="form-select" data-filter-id="${
+                    filter.id
+                  }" data-field="operator">
+                    <option value="contains" ${
+                      filter.operator === "contains" ? "selected" : ""
+                    }>Contiene</option>
+                    <option value="notContains" ${
+                      filter.operator === "notContains" ? "selected" : ""
+                    }>No contiene</option>
+                    <option value="equals" ${
+                      filter.operator === "equals" ? "selected" : ""
+                    }>Igual a</option>
+                    <option value="notEquals" ${
+                      filter.operator === "notEquals" ? "selected" : ""
+                    }>Diferente de</option>
+                    <option value="startsWith" ${
+                      filter.operator === "startsWith" ? "selected" : ""
+                    }>Empieza con</option>
+                    <option value="endsWith" ${
+                      filter.operator === "endsWith" ? "selected" : ""
+                    }>Termina con</option>
+                    <option value="empty" ${
+                      filter.operator === "empty" ? "selected" : ""
+                    }>Está vacío</option>
+                    <option value="notEmpty" ${
+                      filter.operator === "notEmpty" ? "selected" : ""
+                    }>No está vacío</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin:0;">
+                  <label class="form-label" style="font-size:12px;">
+                    Valor
+                    ${
+                      isEqualsOperator
+                        ? `<span class="unique-indicator" style="color:var(--success);font-size:10px;margin-left:4px;">(${uniqueValues.length} opciones)</span>`
+                        : ""
+                    }
+                  </label>
+                  ${valueField}
+                </div>
+                <button class="btn btn-danger" data-remove-filter="${
+                  filter.id
+                }" style="height:38px;">🗑️</button>
+              </div>
+            `;
             })
             .join("");
 
@@ -2573,10 +2709,10 @@
 
           if (State.changeLog.length === 0) {
             content.innerHTML = `
-        <div class="change-log-empty">
-          No se han realizado modificaciones aún. Los cambios aplicados se registrarán aquí.
-        </div>
-      `;
+              <div class="change-log-empty">
+                No se han realizado modificaciones aún. Los cambios aplicados se registrarán aquí.
+              </div>
+            `;
             return;
           }
 
@@ -2618,44 +2754,44 @@
               const filtersHTML =
                 entry.filters.length > 0
                   ? `
-        <div class="change-log-filters">
-          <strong>Filtros aplicados (${entry.filterLogic.toUpperCase()}):</strong>
-          ${entry.filters
-            .map(
-              (f) => `
-            <div class="change-log-filter-item">
-              • ${f.column} ${this.getOperatorText(f.operator)} ${
-                f.value ? '"' + f.value + '"' : ""
-              }
-            </div>
-          `
-            )
-            .join("")}
-        </div>
-      `
+              <div class="change-log-filters">
+                <strong>Filtros aplicados (${entry.filterLogic.toUpperCase()}):</strong>
+                ${entry.filters
+                  .map(
+                    (f) => `
+                  <div class="change-log-filter-item">
+                    • ${f.column} ${this.getOperatorText(f.operator)} ${
+                      f.value ? '"' + f.value + '"' : ""
+                    }
+                  </div>
+                `
+                  )
+                  .join("")}
+              </div>
+            `
                   : '<div class="change-log-detail"><span class="change-log-detail-label">Filtros:</span><span class="change-log-detail-value">Sin filtros (todas las filas)</span></div>';
 
               return `
-        <div class="change-log-item">
-          <div class="change-log-timestamp">
-            🕒 ${time} <span style="color:var(--border);">|</span> Cambio #${
+              <div class="change-log-item">
+                <div class="change-log-timestamp">
+                  🕒 ${time} <span style="color:var(--border);">|</span> Cambio #${
                 actualIndex + 1
               }
-          </div>
-          <div class="change-log-modification">
-            ${modificationText}
-          </div>
-          <div class="change-log-details">
-            <div class="change-log-detail">
-              <span class="change-log-detail-label">Filas afectadas:</span>
-              <span class="change-log-detail-value"><strong style="color:var(--success);">${
-                entry.affectedRows
-              }</strong> filas modificadas</span>
-            </div>
-            ${filtersHTML}
-          </div>
-        </div>
-      `;
+                </div>
+                <div class="change-log-modification">
+                  ${modificationText}
+                </div>
+                <div class="change-log-details">
+                  <div class="change-log-detail">
+                    <span class="change-log-detail-label">Filas afectadas:</span>
+                    <span class="change-log-detail-value"><strong style="color:var(--success);">${
+                      entry.affectedRows
+                    }</strong> filas modificadas</span>
+                  </div>
+                  ${filtersHTML}
+                </div>
+              </div>
+            `;
             })
             .join("");
 
@@ -2808,8 +2944,11 @@
           const filteredData = Utils.applyFilters(State.data, State.filters);
           let affectedCount = 0;
 
+          const colIndex = State.columnMap[field];
+          if (colIndex === undefined) return;
+
           filteredData.forEach((row) => {
-            const currentValue = String(row[field] || "");
+            const currentValue = String(row[colIndex] || "");
             let newVal = currentValue;
 
             switch (modifyType) {
@@ -2834,6 +2973,7 @@
             }
 
             if (newVal !== currentValue) {
+              // Usamos una propiedad del array para guardar el preview
               row[`_preview_${field}`] = newVal;
               affectedCount++;
             } else {
@@ -2899,9 +3039,12 @@
 
           let affectedCount = 0;
 
+          const colIndex = State.columnMap[field];
+          if (colIndex === undefined) return;
+
           State.data.forEach((row) => {
             if (row[`_preview_${field}`] !== undefined) {
-              row[field] = row[`_preview_${field}`];
+              row[colIndex] = row[`_preview_${field}`];
               row._modified = true;
               State.modifiedRowIndices.add(row._rowId);
               delete row[`_preview_${field}`];
@@ -2994,10 +3137,13 @@
             .map((row) => {
               const cells = headers
                 .map((col) => {
+                  const colIndex = State.columnMap[col];
                   const previewKey = `_preview_${col}`;
                   const hasPreview = row[previewKey] !== undefined;
-                  const value = hasPreview ? row[previewKey] : row[col] || "";
-                  const originalValue = row[col] || "";
+                  const value = hasPreview
+                    ? row[previewKey]
+                    : row[colIndex] || "";
+                  const originalValue = row[colIndex] || "";
 
                   return hasPreview
                     ? `<td style="background:rgba(251,191,36,0.2);"><del style="color:var(--muted);">${originalValue}</del> → <strong>${value}</strong></td>`
@@ -3144,7 +3290,9 @@
 
           // Construir preview de data
           const dataParts = columns.map((col) => {
-            const value = sampleRow.hasOwnProperty(col) ? sampleRow[col] : "";
+            const colIndex = State.columnMap[col];
+            const value =
+              sampleRow[colIndex] !== undefined ? sampleRow[colIndex] : "";
             return escapeForPreview(value);
           });
           const dataPreview = dataParts.join(delimiterDisplay);
@@ -3163,43 +3311,43 @@
               : "";
 
           previewDiv.innerHTML = `
-            <div style="margin-bottom:8px;">
-              <strong style="color:var(--muted);font-size:11px;">ENCABEZADOS (${
-                allColumns.length
-              } columnas totales):</strong><br>
-              ${headerPreview}${moreColumns}
-            </div>
-            <div>
-              <strong style="color:var(--muted);font-size:11px;">DATOS (ejemplo de primera fila):</strong><br>
-              ${dataPreview}${moreColumns}
-            </div>
-            <br>
-            <span style="color:var(--muted);font-size:11px;">
-              📌 Delimitador: <strong>${
-                delimiter === "\t"
-                  ? "Tabulador (→)"
-                  : delimiter === ","
-                  ? "Coma (,)"
-                  : delimiter === ";"
-                  ? "Punto y coma (;)"
-                  : "Pipe (|)"
-              }</strong> |
-              Codificación: <strong>${encoding}</strong>${encodingNote} |
-              Entrecomillado: <strong>${
-                quoting === "minimal"
-                  ? "Mínimo"
-                  : quoting === "all"
-                  ? "Todos"
-                  : "Ninguno"
-              }</strong>
-            </span>
-            <br>
-            <span style="color:var(--success);font-size:11px;">
-              ✅ Se exportarán <strong>${
-                allColumns.length
-              } columnas</strong> completas para cada fila
-            </span>
-          `;
+                  <div style="margin-bottom:8px;">
+                    <strong style="color:var(--muted);font-size:11px;">ENCABEZADOS (${
+                      allColumns.length
+                    } columnas totales):</strong><br>
+                    ${headerPreview}${moreColumns}
+                  </div>
+                  <div>
+                    <strong style="color:var(--muted);font-size:11px;">DATOS (ejemplo de primera fila):</strong><br>
+                    ${dataPreview}${moreColumns}
+                  </div>
+                  <br>
+                  <span style="color:var(--muted);font-size:11px;">
+                    📌 Delimitador: <strong>${
+                      delimiter === "\t"
+                        ? "Tabulador (→)"
+                        : delimiter === ","
+                        ? "Coma (,)"
+                        : delimiter === ";"
+                        ? "Punto y coma (;)"
+                        : "Pipe (|)"
+                    }</strong> |
+                    Codificación: <strong>${encoding}</strong>${encodingNote} |
+                    Entrecomillado: <strong>${
+                      quoting === "minimal"
+                        ? "Mínimo"
+                        : quoting === "all"
+                        ? "Todos"
+                        : "Ninguno"
+                    }</strong>
+                  </span>
+                  <br>
+                  <span style="color:var(--success);font-size:11px;">
+                    ✅ Se exportarán <strong>${
+                      allColumns.length
+                    } columnas</strong> completas para cada fila
+                  </span>
+                `;
         },
         render() {
           this.updateStats();
@@ -3247,10 +3395,12 @@
           tbody.innerHTML = displayData
             .map(
               (row) => `
-      <tr class="${row._modified ? "modified" : ""}">
-        ${headers.map((col) => `<td>${row[col] || ""}</td>`).join("")}
-      </tr>
-    `
+            <tr class="${row._modified ? "modified" : ""}">
+              ${headers
+                .map((col) => `<td>${row[State.columnMap[col]] || ""}</td>`)
+                .join("")}
+            </tr>
+          `
             )
             .join("");
         },
