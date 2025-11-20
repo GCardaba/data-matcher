@@ -233,7 +233,6 @@
 
       /* Indicador visual para select de valores únicos */
       .form-select[data-field="value"] {
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237cb2ff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
         background-repeat: no-repeat;
         background-position: right 10px center;
         padding-right: 30px;
@@ -1318,9 +1317,9 @@
       const State = {
         files: [],
         columns: [],
-        columnMap: {}, // Mapa de nombre columna -> índice
-        data: [], // Array de Arrays
-        originalData: [], // Array de Arrays
+        columnMap: {}, // Map of column name -> index
+        data: [], // Array of Arrays
+        originalData: [], // Array of Arrays
         filters: [],
         filterLogic: "or",
         modifications: [],
@@ -1333,7 +1332,7 @@
       };
 
       const Utils = {
-        // Detectar delimitador CSV
+        // Detect CSV delimiter
         detectDelimiter(text) {
           const delimiters = [",", ";", "\t", "|"];
           const lines = text.split("\n").slice(0, 5);
@@ -1351,7 +1350,7 @@
           return counts[0].delim;
         },
 
-        // Procesar CSV con PapaParse (Streaming/Worker)
+        // Process CSV with PapaParse (Streaming/Worker)
         async processCSV(
           input,
           encoding,
@@ -1368,10 +1367,10 @@
                   ? "\t"
                   : delimiter,
               encoding: encoding,
-              header: false, // Queremos arrays, no objetos
+              header: false, // We want arrays, not objects
               skipEmptyLines: true,
-              worker: useWorker, // Usar worker para no bloquear UI
-              dynamicTyping: detectTypes, // PapaParse maneja la inferencia de tipos
+              worker: useWorker, // Use worker to not block UI
+              dynamicTyping: detectTypes, // PapaParse handles type inference
               complete: (results) => {
                 if (results.errors && results.errors.length > 0) {
                   console.warn("CSV Errors:", results.errors);
@@ -1383,23 +1382,21 @@
           });
         },
 
-        // ← NUEVA FUNCIÓN: Inferir tipo de dato
+        // Infer type of data
         inferType(value, detectTypes = true) {
-          // String vacío
+          // Empty string
           if (value === "") return "";
 
-          // Si no se deben detectar tipos, devolver string
+          // If types are not to be detected, return string
           if (!detectTypes) return value;
 
           const trimmed = value.trim();
 
-          // Intentar parsear como número
+          // Try to parse as number
           if (/^-?\d+$/.test(trimmed)) {
-            // Entero
-            // Cuidado con IDs que empiezan por 0 (ej: 00123) -> mantener como string si detectTypes es false (ya manejado arriba)
-            // Pero si detectTypes es true, '00123' se convierte en 123.
-            // Para evitar esto incluso con detectTypes=true, podríamos añadir lógica extra,
-            // pero por ahora respetamos el flag global.
+            // Integer
+            // Be careful with IDs that start with 0 (e.g: 00123) -> keep as string if detectTypes is false (already handled above)
+            // To avoid this even with detectTypes=true, we could add extra logic,
             return parseInt(trimmed, 10);
           }
 
@@ -1408,20 +1405,20 @@
             return parseFloat(trimmed);
           }
 
-          // Notación científica
+          // Scientific notation
           if (/^-?\d*\.?\d+e[+-]?\d+$/i.test(trimmed)) {
             return parseFloat(trimmed);
           }
 
-          // Booleanos
+          // Bools
           if (trimmed.toLowerCase() === "true") return true;
           if (trimmed.toLowerCase() === "false") return false;
 
-          // Si llega aquí, es string
+          // String by default
           return value;
         },
 
-        // Leer archivo como texto
+        // Read file as text
         async readFileAsText(file, encoding = "utf-8") {
           return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -1431,7 +1428,7 @@
           });
         },
 
-        // Procesar archivo Excel
+        // Process Excel file
         async processExcelFile(file, detectTypes = true) {
           return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -1450,7 +1447,7 @@
                 const range = XLSX.utils.decode_range(firstSheet["!ref"]);
                 const jsonData = [];
 
-                // Procesar cada fila manteniendo tipos
+                // Process each row maintaining types
                 for (let R = range.s.r; R <= range.e.r; ++R) {
                   const row = [];
                   for (let C = range.s.c; C <= range.e.c; ++C) {
@@ -1462,28 +1459,28 @@
                       continue;
                     }
 
-                    // Preservar el tipo de dato original
+                    // Preserve original data type
                     let value;
 
                     if (!detectTypes) {
-                      // Si no detectamos tipos, intentamos obtener el valor formateado (string)
-                      // cell.w es el texto formateado, cell.v es el valor crudo
+                      // If types are not to be detected, try to get the formatted value (string)
+                      // cell.w is the formatted text, cell.v is the raw value
                       value = cell.w !== undefined ? cell.w : String(cell.v);
                     } else {
                       if (cell.t === "n") {
-                        // Número
+                        // Number
                         if (cell.z && this.isExcelDateFormat(cell.z)) {
-                          // Es una fecha
+                          // Date
                           value = this.excelDateToJSDate(cell.v);
                         } else {
-                          // Es un número normal - MANTENER COMO NÚMERO
+                          // Normal number - KEEP AS NUMBER
                           value = cell.v;
                         }
                       } else if (cell.t === "d") {
-                        // Fecha nativa de JS
+                        // Native JS date
                         value = this.formatDate(cell.v);
                       } else if (cell.t === "b") {
-                        // Booleano
+                        // Bool
                         value = cell.v;
                       } else if (cell.t === "s") {
                         // String
@@ -1492,7 +1489,7 @@
                         // Error
                         value = "";
                       } else {
-                        // Usar formato formateado si existe, sino el valor raw
+                        // Use formatted format if exists, otherwise the raw value
                         value = cell.w !== undefined ? cell.w : cell.v;
                       }
                     }
@@ -1512,18 +1509,18 @@
           });
         },
 
-        // Detectar si un formato de Excel es de fecha
+        // Detect if an Excel format is a date
         isExcelDateFormat(fmt) {
           if (!fmt) return false;
 
           const fmtLower = fmt.toLowerCase();
 
-          // Códigos de formato de fecha de Excel
+          // Date format codes for excel
           const dateFormatCodes = [
             14, 15, 16, 17, 18, 19, 20, 21, 22, 27, 30, 36, 45, 46, 47,
           ];
 
-          // Patrones de formato de fecha
+          // Date format patterns
           const datePatterns = [
             /[dmyhs]/i,
             /\bdd\b/i,
@@ -1532,7 +1529,7 @@
             /\bh+:m+/i,
           ];
 
-          // Si contiene separadores de fecha y letras de fecha
+          // If contains date separators and date letters
           if (fmtLower.match(/[dmyhs]/)) {
             const hasDateSeparators = /[\/\-\s:.]/.test(fmtLower);
             const hasDateLetters = /[dmy]/.test(fmtLower);
@@ -1542,7 +1539,7 @@
           return false;
         },
 
-        // Convertir número serial de Excel a fecha
+        // Convert Excel serial number to JS date
         excelDateToJSDate(serial) {
           if (typeof serial !== "number") return serial;
 
@@ -1571,12 +1568,12 @@
 
           return `${year}-${month}-${day}`;
         },
-        // Normalizar datos (ahora devuelve Arrays)
+        // Normalize data
         normalizeData(rawData, headerRowIndex = 0) {
           if (!rawData || rawData.length === 0)
             return { columns: [], data: [] };
 
-          // Asegurar que tenemos suficientes filas
+          // Ensure we have enough rows
           if (headerRowIndex >= rawData.length) {
             throw new Error("La fila de encabezado especificada no existe");
           }
@@ -1584,17 +1581,17 @@
           const headers = rawData[headerRowIndex];
           const columns = headers.map((h, i) => String(h || `Column_${i + 1}`));
 
-          // Crear mapa de columnas
+          // Create column map
           const columnMap = {};
           columns.forEach((col, i) => (columnMap[col] = i));
 
-          // Extraer datos (sin convertir a objetos)
+          // Extract data (without converting to objects)
           const data = rawData
             .slice(headerRowIndex + 1)
             .map((row, rowIndex) => {
-              // Asegurar que la fila tenga el mismo número de columnas
-              // Rellenar con vacíos si faltan, recortar si sobran (aunque slice no recorta, map itera sobre row)
-              // Mejor: crear nuevo array del tamaño correcto
+              // Ensure row has the same number of columns
+              // Fill with empty strings if missing, truncate if too long (slice doesn't truncate, map iterates over row)
+              // TODO: create new array of correct size
               const normalizedRow = new Array(columns.length).fill("");
 
               row.forEach((cell, i) => {
@@ -1616,16 +1613,16 @@
           return { columns, data, columnMap };
         },
 
-        // Aplicar filtros (lógica OR/AND dinámica)
+        // Apply filters (dynamic OR/AND logic)
         applyFilters(data, filters) {
           if (!filters || filters.length === 0) return data;
 
-          // Filtrar solo filtros válidos
+          // Filter only valid filters
           const validFilters = filters.filter((f) => {
             if (!f.column || !f.operator) return false;
-            // Para operadores que no necesitan valor
+            // For operators that don't need value
             if (["empty", "notEmpty"].includes(f.operator)) return true;
-            // Para el resto, necesitan valor
+            // For the rest, need value
             return f.value && String(f.value).trim() !== "";
           });
 
@@ -1666,37 +1663,35 @@
           });
         },
 
-        // Exportar CSV
+        // Export to CSV
         exportToCSV(data, columns, filename = "export.csv", options = {}) {
-          // Opciones por defecto
+          // Default options
           const delimiter = options.delimiter || ",";
           const encoding = options.encoding || "utf-8";
           const quoting = options.quoting || "all";
 
-          // Convertir delimitador escapado a real
+          // Convert escaped delimiter to actual
           const actualDelimiter = delimiter === "\\t" ? "\t" : delimiter;
 
-          // Obtener headers (sin columnas internas)
+          // Get headers (without internal columns)
           const headers = columns.filter((col) => !col.startsWith("_"));
 
-          // Función para escapar valores según el modo de entrecomillado
+          // Function to escape values according to the quoting mode
           const escapeCSVValue = (value) => {
-            // Valores vacíos
+            // Empty values
             if (value === null || value === undefined || value === "") {
               return quoting === "all" ? '""' : "";
             }
 
-            // Números: mantener como número con punto decimal
+            // Numbers: keep as number with decimal point
             if (typeof value === "number") {
               if (!Number.isFinite(value)) return "";
               const numStr = value.toString();
 
-              // Si quoting es "all", entrecomillar todo
               if (quoting === "all") {
                 return `"${numStr}"`;
               }
 
-              // Si contiene el delimitador, entrecomillar
               if (numStr.includes(actualDelimiter)) {
                 return `"${numStr}"`;
               }
@@ -1704,28 +1699,28 @@
               return numStr;
             }
 
-            // Booleanos
+            // Bools
             if (typeof value === "boolean") {
               const boolStr = value.toString();
               return quoting === "all" ? `"${boolStr}"` : boolStr;
             }
 
-            // Convertir a string
+            // Convert to string
             const strValue = String(value);
 
-            // Modo "none": sin comillas nunca
+            // Mode "none": never quote
             if (quoting === "none") {
-              // Escapar el delimitador reemplazándolo por espacio
+              // Replace delimiter with space
               return strValue.replace(new RegExp(actualDelimiter, "g"), " ");
             }
 
-            // Modo "all": entrecomillar todo
+            // Mode "all": quote everything
             if (quoting === "all") {
               const escaped = strValue.replace(/"/g, '""');
               return `"${escaped}"`;
             }
 
-            // Modo "minimal": entrecomillar solo si es necesario
+            // Mode "minimal": quote only if necessary
             const needsQuoting =
               strValue.includes(actualDelimiter) ||
               strValue.includes('"') ||
@@ -1742,16 +1737,15 @@
             return strValue;
           };
 
-          // Construir filas del CSV
+          // Build CSV rows
           const csvRows = [
-            // Encabezados
+            // Headers
             headers.map((h) => escapeCSVValue(h)).join(actualDelimiter),
-            // Datos
+            // Data
             ...data.map((row) =>
               headers
                 .map((col) => {
-                  // Encontrar índice de la columna en el array de columnas original
-                  // Nota: columns es el array completo (State.columns)
+                  // Find column index in original columns array
                   const colIndex = columns.indexOf(col);
                   return escapeCSVValue(row[colIndex]);
                 })
@@ -1761,19 +1755,19 @@
 
           const csvContent = csvRows.join("\n");
 
-          // Manejar codificación
+          // Handle encoding
           let finalContent = csvContent;
           let blobOptions = {};
 
           switch (encoding) {
             case "utf-8-bom":
-              // UTF-8 con BOM (mejor para Excel)
+              // UTF-8 with BOM (better for Excel)
               finalContent = "\uFEFF" + csvContent;
               blobOptions = { type: "text/csv;charset=utf-8;" };
               break;
 
             case "utf-8":
-              // UTF-8 sin BOM
+              // UTF-8 without BOM
               blobOptions = { type: "text/csv;charset=utf-8;" };
               break;
 
@@ -1791,25 +1785,25 @@
               blobOptions = { type: "text/csv;charset=utf-8;" };
           }
 
-          // Crear blob y descargar
+          // Create blob and download
           const blob = new Blob([finalContent], blobOptions);
           const link = document.createElement("a");
           link.href = URL.createObjectURL(blob);
           link.download = filename;
           link.click();
 
-          // Liberar memoria
+          // Free memory
           setTimeout(() => URL.revokeObjectURL(link.href), 100);
         },
 
-        // Exportar Excel
+        // Export to Excel
         exportToExcel(data, columns, filename = "export.xlsx") {
           const headers = columns.filter((col) => !col.startsWith("_"));
 
-          // Crear worksheet manualmente para preservar tipos
+          // Create worksheet manually to preserve types
           const ws = XLSX.utils.aoa_to_sheet([headers]);
 
-          // Añadir datos fila por fila preservando tipos
+          // Add data row by row preserving types
           data.forEach((row, rowIndex) => {
             headers.forEach((col, colIndex) => {
               const cellAddress = XLSX.utils.encode_cell({
@@ -1817,21 +1811,18 @@
                 c: colIndex,
               });
 
-              // Obtener índice real en el array de datos
+              // Get real index in the data array
               const realColIndex = columns.indexOf(col);
               const value = row[realColIndex];
 
-              // Crear celda con tipo apropiado
+              // Create cell with appropriate type
               if (value === "" || value === null || value === undefined) {
                 ws[cellAddress] = { t: "s", v: "" };
               } else if (typeof value === "number") {
-                // Número: preservar como número
                 ws[cellAddress] = { t: "n", v: value };
               } else if (typeof value === "boolean") {
-                // Booleano
                 ws[cellAddress] = { t: "b", v: value };
               } else if (this.isDateString(value)) {
-                // Fecha: intentar convertir a fecha de Excel
                 const date = new Date(value);
                 if (!isNaN(date.getTime())) {
                   const excelDate = this.jsDateToExcelDate(date);
@@ -1857,7 +1848,6 @@
           XLSX.writeFile(wb, filename);
         },
 
-        // ← NUEVA FUNCIÓN: Detectar si un string es una fecha
         isDateString(value) {
           if (typeof value !== "string") return false;
 
@@ -1873,7 +1863,6 @@
           return datePatterns.some((pattern) => pattern.test(value));
         },
 
-        // ← NUEVA FUNCIÓN: Convertir fecha JS a número serial de Excel
         jsDateToExcelDate(date) {
           const epoch = new Date(1899, 11, 30);
           const msPerDay = 24 * 60 * 60 * 1000;
@@ -1883,7 +1872,7 @@
           return days;
         },
 
-        // Actualizar status
+        // Update status
         setStatus(type, message, icon = "ℹ️") {
           const statusBar = document.getElementById("statusBar");
           const statusText = document.getElementById("statusText");
@@ -1900,7 +1889,7 @@
       // ============================================
       const Navigation = {
         goToStep(step) {
-          // Ocultar todos los steps
+          // Hide all steps
           for (let i = 1; i <= 4; i++) {
             const section = document.getElementById(`step${i}`);
             const stepEl = document.querySelector(`.step[data-step="${i}"]`);
@@ -1918,7 +1907,7 @@
         },
 
         setupNavigation() {
-          // Navegación entre pasos
+          // Step navigation
           document
             .getElementById("backToStep1")
             ?.addEventListener("click", () => this.goToStep(1));
@@ -1943,7 +1932,7 @@
               ExportManager.init();
             });
 
-          // Click en stepper
+          // Click on stepper
           document.querySelectorAll(".step").forEach((step) => {
             step.addEventListener("click", () => {
               const stepNum = parseInt(step.getAttribute("data-step"));
@@ -2020,10 +2009,30 @@
 
             const delimiter = document.getElementById("csvDelimiter").value;
             const encoding = document.getElementById("encoding").value;
-            const headerRow =
-              parseInt(document.getElementById("headerRow").value) - 1;
+            // Get header row and validate
+            const headerRowInput = parseInt(
+              document.getElementById("headerRow").value
+            );
 
-            // Obtener valor del checkbox
+            if (isNaN(headerRowInput) || headerRowInput < 1) {
+              alert(
+                "La fila de encabezado debe ser un número positivo (mínimo 1)."
+              );
+              Utils.setStatus("error", "❌ Fila de encabezado inválida", "❌");
+              return;
+            }
+
+            const headerRow = headerRowInput - 1;
+
+            // After processing file, verify that it exists:
+            if (headerRow >= rawData.length) {
+              throw new Error(
+                `La fila de encabezado especificada (${headerRowInput}) no existe. 
+                 El archivo solo tiene ${rawData.length} filas.`
+              );
+            }
+
+            // Get checkbox value
             const disableTypeInference = document.getElementById(
               "disableTypeInference"
             ).checked;
@@ -2047,14 +2056,12 @@
                   delimiter === "auto"
                     ? Utils.detectDelimiter(text)
                     : delimiter;
-                // Usar processCSV en lugar de parseCSV
-                // Nota: processCSV espera un File object, pero aquí le pasamos texto si usamos parseCSV antiguo.
-                // Pero processCSV usa Papa.parse que acepta File o String.
-                // Sin embargo, processCSV está diseñado para File.
-                // Si queremos usar worker con string, PapaParse lo soporta.
-                // Pero FileLoader.loadFiles ya lee el texto para detectar delimitador si es auto.
-                // Si es auto, ya leímos el texto.
-                // Si no es auto, podemos pasar el File directamente a processCSV.
+                // Use processCSV instead of parseCSV
+                // Note: processCSV expects a File object, but here we pass text if we use the old parseCSV.
+                // But processCSV uses Papa.parse which accepts File or String.
+                // However, processCSV is designed for File.
+                // If we want to use worker with string, PapaParse supports it.
+                // But FileLoader.loadFiles already reads the text to detect delimiter if it's auto.
 
                 if (delimiter === "auto") {
                   // Passing text string, so disable worker
@@ -2087,18 +2094,18 @@
 
               processedFiles.push(normalized);
 
-              // Agregar todas las columnas al set global
+              // Add all columns to global set
               normalized.columns.forEach((col) => allColumns.add(col));
             }
 
-            // Convertir set a array
+            // Convert set to array
             const finalColumns = Array.from(allColumns);
 
-            // Crear mapa global de columnas
+            // Create global column map
             const finalColumnMap = {};
             finalColumns.forEach((col, i) => (finalColumnMap[col] = i));
 
-            // Detectar si hay discrepancias en columnas
+            // Detect if there are column mismatches
             let hasColumnMismatch = false;
             if (State.files.length > 1) {
               const firstFileColumns = new Set(fileColumnsInfo[0].columns);
@@ -2118,21 +2125,21 @@
               }
             }
 
-            // Normalizar todas las filas para que tengan todas las columnas (Arrays)
+            // Normalize all rows to have all columns (Arrays)
             processedFiles.forEach((fileData) => {
-              // fileData.data es Array de Arrays
-              // fileData.columnMap es el mapa local
+              // fileData.data is Array of Arrays
+              // fileData.columnMap is the local map
 
               const alignedData = fileData.data.map((row) => {
                 const newRow = new Array(finalColumns.length).fill("");
 
-                // Copiar datos existentes a su nueva posición
+                // Copy existing data to its new position
                 fileData.columns.forEach((col, localIndex) => {
                   const globalIndex = finalColumnMap[col];
                   newRow[globalIndex] = row[localIndex];
                 });
 
-                // Copiar metadatos
+                // Copy metadata
                 newRow._rowId = row._rowId;
                 newRow._modified = row._modified;
 
@@ -2142,7 +2149,7 @@
               allData = allData.concat(alignedData);
             });
 
-            // Reasignar IDs globales para evitar duplicados si concatenamos archivos
+            // Reassign global IDs to avoid duplicates if concatenating files
             allData.forEach((row, i) => (row._rowId = i));
 
             State.columns = finalColumns;
@@ -2191,7 +2198,7 @@
           document.getElementById("totalFiles").textContent =
             State.files.length;
 
-          // Mostrar warning si hay inconsistencias
+          // Show warning if column mismatches
           this.renderColumnWarning();
 
           // Headers
@@ -2200,7 +2207,7 @@
             .map((col) => `<th>${col}</th>`)
             .join("")}</tr>`;
 
-          // Body (primeras 200 filas)
+          // Body (show first 200 rows)
           const displayData = State.data.slice(0, 200);
           tbody.innerHTML = displayData
             .map(
@@ -2215,7 +2222,7 @@
             .join("");
         },
 
-        // Renderizar warning de columnas inconsistentes
+        // Render column mismatch warning
         renderColumnWarning() {
           const warningBox = document.getElementById("columnWarningBox");
           const fileColumnsList = document.getElementById("fileColumnsList");
@@ -2227,24 +2234,22 @@
 
           warningBox.classList.remove("hidden");
 
-          // Obtener todas las columnas únicas
+          // Get unique columns
           const allColumns = new Set(
             State.columns.filter((col) => !col.startsWith("_"))
           );
 
-          // Generar HTML para cada archivo
+          // Generate HTML for each file
           const filesHTML = State.fileColumnsInfo
             .map((fileInfo, index) => {
               const fileColumns = new Set(
                 fileInfo.columns.filter((col) => !col.startsWith("_"))
               );
 
-              // Columnas que le faltan a este archivo
               const missingColumns = [...allColumns].filter(
                 (col) => !fileColumns.has(col)
               );
 
-              // Columnas que tiene este archivo
               const presentColumns = [...fileColumns];
 
               return `
@@ -2277,7 +2282,7 @@
 
           fileColumnsList.innerHTML = filesHTML;
 
-          // Actualizar status
+          // Update status
           Utils.setStatus(
             "warning",
             `⚠️ Archivos con estructuras diferentes detectados. Revisa la advertencia en el Paso 2.`,
@@ -2299,14 +2304,14 @@
           this.render();
         },
 
-        // FILTROS
+        // Filters
         initFilters() {
           const addBtn = document.getElementById("addFilterBtn");
           const clearBtn = document.getElementById("clearFiltersBtn");
           const orBtn = document.getElementById("orFilterBtn");
           const andBtn = document.getElementById("andFilterBtn");
 
-          // Remover listeners previos
+          // Remove previous listeners (avoid duplicates and related bugs)
           const newAddBtn = addBtn.cloneNode(true);
           addBtn.parentNode.replaceChild(newAddBtn, addBtn);
 
@@ -2337,7 +2342,7 @@
           this.applyFilters();
         },
 
-        // Obtener valores únicos de una columna
+        // Get unique values from a column
         getUniqueValues(columnName) {
           const values = new Set();
           const colIndex = State.columnMap[columnName];
@@ -2350,7 +2355,7 @@
             }
           });
           return Array.from(values).sort((a, b) => {
-            // Intentar ordenar numéricamente si es posible, sino alfabéticamente
+            // Sort numerically (if possible), otherwise alphabetically
             const numA = parseFloat(a);
             const numB = parseFloat(b);
             if (!isNaN(numA) && !isNaN(numB)) {
@@ -2377,17 +2382,18 @@
                 filter.operator
               );
 
-              // Obtener valores únicos si el operador es "equals"
+              // Get unique values if operator is "equals"
+              // TODO?: optimise when there are too many rows and the field has a lot of unique values | async?
               let uniqueValues = [];
               if (isEqualsOperator && filter.column) {
                 uniqueValues = this.getUniqueValues(filter.column);
               }
 
-              // Generar el campo de valor (input o select según el operador)
+              // Generate the value field (input or select depending on the operator)
               let valueField = "";
               if (needsValue) {
                 if (isEqualsOperator) {
-                  // Select con valores únicos
+                  // Select with unique values
                   valueField = `
                   <select class="form-select" data-filter-id="${
                     filter.id
@@ -2405,14 +2411,14 @@
                   </select>
                 `;
                 } else {
-                  // Input de texto normal
+                  // Text input
                   valueField = `
                   <input type="text" class="form-input" data-filter-id="${filter.id}" data-field="value"
                          value="${filter.value}" placeholder="Valor a filtrar">
                 `;
                 }
               } else {
-                // Operadores que no necesitan valor (empty, notEmpty)
+                // Operators that don't need a value (empty, notEmpty)
                 valueField = `
                 <input type="text" class="form-input" value="(no requerido)" disabled>
               `;
@@ -2494,7 +2500,7 @@
         attachFilterEvents() {
           const container = document.getElementById("filtersContainer");
 
-          // Listeners para cambios en columna
+          // Listeners for column changes
           container
             .querySelectorAll('select[data-field="column"]')
             .forEach((el) => {
@@ -2505,9 +2511,9 @@
                 if (filter) {
                   filter.column = e.target.value;
 
-                  // Si el operador es "equals", re-renderizar para actualizar las opciones
+                  // IF operator is "equals", re-render to update options
                   if (filter.operator === "equals") {
-                    filter.value = ""; // Resetear el valor cuando cambia la columna
+                    filter.value = ""; // Reset value when column changes
                     this.renderFilters();
                   } else {
                     this.applyFilters();
@@ -2516,7 +2522,7 @@
               });
             });
 
-          // Listeners para cambios en operador
+          // Listeners for operator changes
           container
             .querySelectorAll('select[data-field="operator"]')
             .forEach((el) => {
@@ -2529,10 +2535,10 @@
                   const newOperator = e.target.value;
                   filter.operator = newOperator;
 
-                  // Si cambia de/a "equals", re-renderizar para cambiar input/select
+                  // IF changes from/to "equals", re-render to change input/select
                   if (oldOperator === "equals" || newOperator === "equals") {
                     if (newOperator === "equals") {
-                      filter.value = ""; // Resetear valor al cambiar a equals
+                      filter.value = ""; // Reset value when changing to equals
                     }
                     this.renderFilters();
                   } else {
@@ -2542,7 +2548,7 @@
               });
             });
 
-          // Listeners para cambios en valor (tanto input como select)
+          // Listeners for value changes (both input and select)
           container
             .querySelectorAll(
               'input[data-field="value"], select[data-field="value"]'
@@ -2561,7 +2567,7 @@
               });
             });
 
-          // Listeners para botones de eliminar
+          // Listeners for remove filter buttons
           container.querySelectorAll("[data-remove-filter]").forEach((btn) => {
             btn.addEventListener("click", (e) => {
               const id = parseInt(
@@ -2635,7 +2641,7 @@
           const applyBtn = document.getElementById("applyChangesBtn");
           const undoBtn = document.getElementById("undoChangesBtn");
 
-          // Poblar selector de campos
+          // Get fields for field selector
           const fieldSelect = document.getElementById("fieldToEdit");
           const columns = State.columns.filter((col) => !col.startsWith("_"));
           fieldSelect.innerHTML = columns
@@ -2676,7 +2682,7 @@
             toggle.classList.toggle("collapsed");
           });
 
-          // Exportar log
+          // Export change log
           exportBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             this.exportChangeLog();
@@ -2716,7 +2722,7 @@
             return;
           }
 
-          // Renderizar en orden inverso (más reciente primero)
+          // Render in reverse order (most recent first)
           const logsHTML = [...State.changeLog]
             .reverse()
             .map((entry, index) => {
@@ -2934,6 +2940,7 @@
           }
         },
 
+        // Preview changes pannel
         previewChanges() {
           const field = document.getElementById("fieldToEdit").value;
           const modifyType = document.getElementById("modifyType").value;
@@ -2973,7 +2980,7 @@
             }
 
             if (newVal !== currentValue) {
-              // Usamos una propiedad del array para guardar el preview
+              // Use an array properties to store the preview
               row[`_preview_${field}`] = newVal;
               affectedCount++;
             } else {
@@ -3007,7 +3014,7 @@
         },
 
         cancelPreview() {
-          // Limpiar todas las previsualizaciones
+          // Clear all previews
           State.data.forEach((row) => {
             State.columns.forEach((col) => {
               delete row[`_preview_${col}`];
@@ -3052,7 +3059,7 @@
             }
           });
 
-          // Registrar cambio en el log
+          // Register change in the log
           const modification = {
             field: field,
             type: modifyType,
@@ -3117,7 +3124,7 @@
             filteredData.length;
         },
 
-        // TABLA UNIFICADA
+        // Render the table
         render() {
           this.renderFilters();
           this.applyFilters();
@@ -3187,12 +3194,12 @@
           const newFormatSelect = formatSelect.cloneNode(true);
           formatSelect.replaceWith(newFormatSelect);
 
-          // ← NUEVO: Listeners para opciones CSV
+          // Listeners for CSV options
           const delimiterSelect = document.getElementById("exportCsvDelimiter");
           const encodingSelect = document.getElementById("exportCsvEncoding");
           const quotingSelect = document.getElementById("exportCsvQuoting");
 
-          // Añadir listeners frescos
+          // Add fresh listeners
           document
             .getElementById("exportDataBtn")
             .addEventListener("click", () => this.exportData());
@@ -3203,14 +3210,14 @@
             .getElementById("exportScope")
             .addEventListener("change", () => this.updatePreview());
 
-          // ← NUEVO: Listener para cambio de formato
+          // Listener for format change
           document
             .getElementById("exportFormat")
             .addEventListener("change", () => {
               this.updateCsvOptionsVisibility();
             });
 
-          // ← NUEVO: Listeners para opciones CSV
+          // Listeners for CSV options
           delimiterSelect.addEventListener("change", () =>
             this.updateDelimiterPreview()
           );
@@ -3244,7 +3251,7 @@
             return;
           }
 
-          // Obtener las primeras 5 columnas para la preview
+          // Get 5 first columns for preview
           const allColumns = State.columns.filter(
             (col) => !col.startsWith("_")
           );
@@ -3284,11 +3291,11 @@
             }
           };
 
-          // Construir preview de header
+          // Build header preview
           const headerParts = columns.map((col) => escapeForPreview(col));
           const headerPreview = headerParts.join(delimiterDisplay);
 
-          // Construir preview de data
+          // Build data preview
           const dataParts = columns.map((col) => {
             const colIndex = State.columnMap[col];
             const value =
@@ -3440,7 +3447,7 @@
           const filename = `data_export_${scopeText}_${timestamp}`;
 
           if (format === "csv") {
-            // ← NUEVO: Obtener opciones CSV
+            // Get CSV options
             const delimiter =
               document.getElementById("exportCsvDelimiter").value;
             const encoding = document.getElementById("exportCsvEncoding").value;
